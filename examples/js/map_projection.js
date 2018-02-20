@@ -1,10 +1,11 @@
-(function () {
+(function() {
 	window.viewer = new Potree.Viewer(document.getElementById("potree_render_area"));
-	Potree.MapTextureManagerSettings.tileServer = "https://tile.openstreetmap.org";
+		
 	viewer.setEDLEnabled(true);
 	viewer.setFOV(60);
-	viewer.setPointBudget(1 * 1000 * 1000);
+	viewer.setPointBudget(1*1000*1000);
 	viewer.loadSettingsFromURL();
+
 	viewer.setDescription("Point cloud courtesy of <a target='_blank' href='https://www.sigeom.ch/'>sigeom sa</a>");
 
 	// Load and add point cloud to scene
