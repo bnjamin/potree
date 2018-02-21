@@ -166,7 +166,8 @@ Potree.PointColorType = {
 	NORMAL: 11,
 	PHONG: 12,
 	RGB_HEIGHT: 13,
-	COMPOSITE: 50
+	COMPOSITE: 50,
+	MAP: 60
 };
 
 Potree.TreeType = {
@@ -283,7 +284,8 @@ Potree.PointCloudMaterial = class PointCloudMaterial extends THREE.RawShaderMate
 			uSnapProj:			{ type: "Matrix4fv", value: [] },
 			uSnapProjInv:		{ type: "Matrix4fv", value: [] },
 			uSnapViewInv:		{ type: "Matrix4fv", value: [] },
-			uShadowColor:		{ type: "3fv", value: [0, 0, 0] }
+			uShadowColor:		{ type: "3fv", value: [0, 0, 0] },
+			texture:			{ type: "t", value: this.texture }
 		};
 
 		this.classification = Potree.Classification.DEFAULT;
@@ -335,6 +337,10 @@ Potree.PointCloudMaterial = class PointCloudMaterial extends THREE.RawShaderMate
 			this.transparent = true;
 			this.depthTest = true;
 			this.depthWrite = false;
+		}
+
+		if(this.texture) {
+			this.uniforms.texture.value = this.texture;
 		}
 
 		this.needsUpdate = true;
@@ -397,6 +403,8 @@ Potree.PointCloudMaterial = class PointCloudMaterial extends THREE.RawShaderMate
 			defines.push('#define color_type_rgb_height');
 		} else if (this._pointColorType === Potree.PointColorType.COMPOSITE) {
 			defines.push('#define color_type_composite');
+		} else if (this._pointColorType === Potree.PointColorType.MAP) {
+			defines.push('#define color_type_map');
 		}
 		
 		if(this._treeType === Potree.TreeType.OCTREE){

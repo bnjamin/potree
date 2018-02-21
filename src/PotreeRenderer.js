@@ -1058,6 +1058,11 @@ Potree.Renderer = class Renderer {
 			gl.bindTexture(classificationTexture.target, classificationTexture.id);
 			currentTextureBindingPoint++;
 
+			let mapTexture = this.textures.get(material.uniforms.texture.value);
+			shader.setUniform1i("texture", currentTextureBindingPoint);
+			gl.activeTexture(gl.TEXTURE0 + currentTextureBindingPoint);
+			gl.bindTexture(mapTexture.target, mapTexture.id);
+			currentTextureBindingPoint++;
 
 			if (material.snapEnabled === true) {
 
