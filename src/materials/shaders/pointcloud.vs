@@ -62,6 +62,8 @@ uniform float uOctreeSpacing;
 uniform float uNodeSpacing;
 uniform float uOctreeSize;
 uniform vec3 uBBSize;
+uniform vec3 bbMin;
+uniform vec3 bbMax;
 uniform float uLevel;
 uniform float uVNStart;
 uniform bool uIsLeafNode;
@@ -526,7 +528,8 @@ vec3 getColor(){
 	#elif defined color_type_composite
 		color = getCompositeColor();
 	#elif defined color_type_map
-		color = texture2D(texture, vec2(1, 1)).rgb;
+		vec3 relativePosition = (position - bbMin) / (bbMax - bbMin);
+		color = texture2D(texture, relativePosition.xy).rgb;
 	#endif
 	
 	return color;

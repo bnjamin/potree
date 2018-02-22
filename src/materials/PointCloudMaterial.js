@@ -285,6 +285,8 @@ Potree.PointCloudMaterial = class PointCloudMaterial extends THREE.RawShaderMate
 			uSnapProjInv:		{ type: "Matrix4fv", value: [] },
 			uSnapViewInv:		{ type: "Matrix4fv", value: [] },
 			uShadowColor:		{ type: "3fv", value: [0, 0, 0] },
+			bbMin:				{ type: "v3", value: new THREE.Vector3(0,0,0)},
+			bbMax:				{ type: "v3", value: new THREE.Vector3(0,0,0)}, 
 			texture:			{ type: "t", value: this.texture }
 		};
 
@@ -341,6 +343,16 @@ Potree.PointCloudMaterial = class PointCloudMaterial extends THREE.RawShaderMate
 
 		if(this.texture) {
 			this.uniforms.texture.value = this.texture;
+		}
+
+		if(this.bbMin) {
+			this.uniforms.bbMin.value = this.bbMin;
+			this.setValues({bbMin: this.bbMin});
+		}
+
+		if(this.bbMax) {
+			this.uniforms.bbMax.value = this.bbMax;
+			this.setValues({bbMax: this.bbMax});
 		}
 
 		this.needsUpdate = true;
@@ -498,6 +510,25 @@ Potree.PointCloudMaterial = class PointCloudMaterial extends THREE.RawShaderMate
 		}
 	}
 
+	get bbMin() {
+		return this.uniforms.bbMin.value;
+	}
+
+	set bbMin(value) {
+		if (this.uniforms.bbMin.value !== value) {
+			this.uniforms.bbMin.value = value;
+		}
+	}
+
+	get bbMax() {
+		return this.uniforms.bbMax.value;
+	}
+
+	set bbMax(value) {
+		if (this.uniforms.bbMax.value !== value) {
+			this.uniforms.bbMax.value = value;
+		}
+	}
 
 	get classification () {
 		return this._classification;

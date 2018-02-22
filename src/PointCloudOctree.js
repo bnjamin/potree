@@ -121,6 +121,8 @@ Potree.PointCloudOctree = class extends Potree.PointCloudTree {
 			let box = [this.pcoGeometry.tightBoundingBox, this.getBoundingBoxWorld()]
 				.find(v => v !== undefined);
 
+			this.material.bbMin = new THREE.Vector3(box.min.x, box.min.y, box.min.z);
+			this.material.bbMax = new THREE.Vector3(box.max.x, box.max.y, box.max.z);
 			this.updateMatrixWorld(true);
 			box = Potree.utils.computeTransformedBoundingBox(box, this.matrixWorld);
 
