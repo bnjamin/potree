@@ -287,7 +287,7 @@ Potree.PointCloudMaterial = class PointCloudMaterial extends THREE.RawShaderMate
 			uShadowColor:		{ type: "3fv", value: [0, 0, 0] },
 			bbMin:				{ type: "v3", value: new THREE.Vector3(0,0,0)},
 			bbMax:				{ type: "v3", value: new THREE.Vector3(0,0,0)}, 
-			texture:			{ type: "t", value: this.texture }
+			texture:			{ type: "t", value: null }
 		};
 
 		this.classification = Potree.Classification.DEFAULT;
@@ -529,6 +529,15 @@ Potree.PointCloudMaterial = class PointCloudMaterial extends THREE.RawShaderMate
 			this.uniforms.bbMax.value = value;
 		}
 	}
+
+	get texture() {
+        return this.uniforms.texture.value;
+    }
+    set texture(value) {
+        this.uniforms.texture.value = value;
+        this.updateShaderSource();
+
+    }
 
 	get classification () {
 		return this._classification;

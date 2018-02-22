@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 	<meta charset="utf-8">
 	<meta name="description" content="">
@@ -13,7 +14,7 @@
 	<link rel="stylesheet" type="text/css" href="../libs/openlayers3/ol.css">
 	<link rel="stylesheet" type="text/css" href="../libs/spectrum/spectrum.css">
 	<link rel="stylesheet" type="text/css" href="../libs/jstree/themes/mixed/style.css">
-	
+
 </head>
 
 <body>
@@ -31,18 +32,51 @@
 	<script src="../libs/jstree/jstree.js"></script>
 	<script src="../build/potree/potree.js"></script>
 	<script src="../libs/plasio/js/laslaz.js"></script>
+
+<script id="vs" type="x-shader/x-vertex">
+varying vec2 vUv;
+
+void main() {
+    vUv = uv;
+
+    gl_Position =   projectionMatrix * 
+                    modelViewMatrix * 
+                    vec4(position,1.0);
+}
+</script>
+<script id="fs" type="x-shader/x-vertex">
+
+#extension GL_EXT_frag_depth : enable
+
+uniform sampler2D depthMap;
+uniform sampler2D texture;
+
+varying vec2 vUv;
+
+void main() {
+    vec4 color = texture2D(texture, vUv); 
+    float depth = texture2D(depthMap, vUv).g; 
+	color = color / color.w;
+    gl_FragColor = color; 
 	
+	gl_FragDepthEXT = depth;
+}
+</script>
 	<!-- INCLUDE ADDITIONAL DEPENDENCIES HERE -->
 	<!-- INCLUDE SETTINGS HERE -->
-	
+
 	<div class="potree_container" style="position: absolute; width: 100%; height: 100%; left: 0px; top: 0px; ">
 		<div id="potree_render_area"></div>
 	</div>
 
-	<canvas id="texture" width="100" height="100" style="height: 100px; width: 100px; position: fixed; right: 0px; bottom: 0px; z-index: 1;"></canvas>
+	<canvas id="texture" width="600" height="266" style="height: 266px; width: 600px; position: fixed; right: 0px; bottom: 0px; z-index: 1;"></canvas>
+
+	<script src="./js/webgl-debug.js"></script>
 
 	<script src="./js/map_projection.js"></script>
-	
-	
-  </body>
+
+
+
+</body>
+
 </html>
