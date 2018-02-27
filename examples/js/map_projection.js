@@ -56,7 +56,6 @@
 				// gl = WebGLDebugUtils.makeDebugContext(gl, throwOnGLError, logAndValidate);
 				let ctx = canvasEl.getContext("2d");
 				ctx.drawImage(this, 0, 0);
-				debugger;
 				let texture = new THREE.CanvasTexture(canvasEl);
 				texture.minFilter = THREE.LinearFilter;
 				texture.needsUpdate = true;

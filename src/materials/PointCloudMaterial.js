@@ -215,7 +215,6 @@ Potree.PointCloudMaterial = class PointCloudMaterial extends THREE.RawShaderMate
 		this.defines = new Map();
 
 		this._defaultIntensityRangeChanged = false;
-		this._defaultElevationRangeChanged = false;
 
 		this.attributes = {
 			position: { type: 'fv', value: [] },
@@ -247,7 +246,6 @@ Potree.PointCloudMaterial = class PointCloudMaterial extends THREE.RawShaderMate
 			maxSize:			{ type: "f", value: maxSize },
 			octreeSize:			{ type: "f", value: 0 },
 			bbSize:				{ type: "fv", value: [0, 0, 0] },
-			elevationRange:		{ type: "2fv", value: [0, 0] },
 			clipBoxCount:		{ type: "f", value: 0 },
 			clipPolygonCount:	{ type: "i", value: 0 },
 			visibleNodes:		{ type: "t", value: this.visibleNodesTexture },
@@ -285,8 +283,8 @@ Potree.PointCloudMaterial = class PointCloudMaterial extends THREE.RawShaderMate
 			uSnapProjInv:		{ type: "Matrix4fv", value: [] },
 			uSnapViewInv:		{ type: "Matrix4fv", value: [] },
 			uShadowColor:		{ type: "3fv", value: [0, 0, 0] },
-			bbMin:				{ type: "v3", value: new THREE.Vector3(0,0,0)},
-			bbMax:				{ type: "v3", value: new THREE.Vector3(0,0,0)}, 
+			bbMin:				{ type: "3fv", value: [0, 0, 0]},
+			bbMax:				{ type: "3fv", value: [0, 0, 0]},
 			texture:			{ type: "t", value: null }
 		};
 
@@ -347,12 +345,10 @@ Potree.PointCloudMaterial = class PointCloudMaterial extends THREE.RawShaderMate
 
 		if(this.bbMin) {
 			this.uniforms.bbMin.value = this.bbMin;
-			this.setValues({bbMin: this.bbMin});
 		}
 
 		if(this.bbMax) {
 			this.uniforms.bbMax.value = this.bbMax;
-			this.setValues({bbMax: this.bbMax});
 		}
 
 		this.needsUpdate = true;
@@ -840,42 +836,6 @@ Potree.PointCloudMaterial = class PointCloudMaterial extends THREE.RawShaderMate
 				target: this
 			});
 		}
-	}
-
-	get elevationRange () {
-		return this.uniforms.elevationRange.value;
-	}
-
-	set elevationRange (value) {
-		let changed = this.uniforms.elevationRange.value[0] !== value[0]
-			|| this.uniforms.elevationRange.value[1] !== value[1];
-
-		if(changed){
-			this.uniforms.elevationRange.value = value;
-
-			this._defaultElevationRangeChanged = true;
-
-			this.dispatchEvent({
-				type: 'material_property_changed',
-				target: this
-			});
-		}
-	}
-
-	get heightMin () {
-		return this.uniforms.elevationRange.value[0];
-	}
-
-	set heightMin (value) {
-		this.elevationRange = [value, this.elevationRange[1]];
-	}
-
-	get heightMax () {
-		return this.uniforms.elevationRange.value[1];
-	}
-
-	set heightMax (value) {
-		this.elevationRange = [this.elevationRange[0], value];
 	}
 
 	get transition () {

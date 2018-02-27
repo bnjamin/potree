@@ -1020,7 +1020,8 @@ Potree.Renderer = class Renderer {
 			//uniform float opacity;
 			shader.setUniform1f("uOpacity", material.opacity);
 
-			shader.setUniform2f("elevationRange", material.elevationRange);
+			shader.setUniform3f("bbMin", material.bbMin);
+			shader.setUniform3f("bbMax", material.bbMax);
 			shader.setUniform2f("intensityRange", material.intensityRange);
 			//uniform float intensityGamma;
 			//uniform float intensityContrast;

@@ -408,10 +408,17 @@ float getIntensity(){
 
 vec3 getElevation(){
 	vec4 world = modelMatrix * vec4( position, 1.0 );
-	float w = (world.z - elevationRange.x) / (elevationRange.y - elevationRange.x);
+	float w = (world.z - bbMin.z) / (bbMax.z - bbMin.z);
 	vec3 cElevation = texture2D(gradient, vec2(w,1.0-w)).rgb;
 	
 	return cElevation;
+}
+
+vec3 getMapColor(){
+	vec4 world = modelMatrix * vec4( position, 1.0 );
+	vec3 relativeCoordinates = (world.xyz - bbMin) / (bbMax - bbMin);
+	vec2 uv = relativeCoordinates.xy;
+	return texture2D(texture, uv).rgb;
 }
 
 vec4 getClassification(){
@@ -528,9 +535,7 @@ vec3 getColor(){
 	#elif defined color_type_composite
 		color = getCompositeColor();
 	#elif defined color_type_map
-		float nodeSize = uOctreeSize / pow(2.0, uLevel);
-		vec2 uv = position.xy / nodeSize;
-		color = texture2D(texture, uv).rgb;
+		color = getMapColor();
 	#endif
 	
 	return color;
