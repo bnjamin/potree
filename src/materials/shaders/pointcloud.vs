@@ -528,10 +528,9 @@ vec3 getColor(){
 	#elif defined color_type_composite
 		color = getCompositeColor();
 	#elif defined color_type_map
-		vec3 relativePosition = (position - vec3(0.0010000000474974513, 0, 0.05899999999996908)) / (vec3(599.9989999999525,265.7049999999872, 67.41600000000005) - vec3(0.0010000000474974513, 0, 0.05899999999996908));
-		color = texture2D(texture, relativePosition.xy).rgb;
-
-		// color = texture2D(texture, position.xy).rgb;
+		float nodeSize = uOctreeSize / pow(2.0, uLevel);
+		vec2 uv = position.xy / nodeSize;
+		color = texture2D(texture, uv).rgb;
 	#endif
 	
 	return color;

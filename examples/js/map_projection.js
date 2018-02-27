@@ -21,7 +21,6 @@
 			material.texture = texture;
 			material.interpolate = true;
 			material.updateShaderSource();
-			debugger;
 			window.loadedTexture = material.texture;
 
 			pointcloud.updateMatrixWorld();
@@ -42,14 +41,17 @@
 
 
 
+	function long2tile(lon,zoom) { return (Math.floor((lon+180)/360*Math.pow(2,zoom))); }
+	function lat2tile(lat,zoom)  { return (Math.floor((1-Math.log(Math.tan(lat*Math.PI/180) + 1/Math.cos(lat*Math.PI/180))/Math.PI)/2 *Math.pow(2,zoom))); }
 
 	function getTexture() {
 		return new Promise((resolve, reject) => {
-			let image = new Image(600, 266);
+			let image = new Image(256, 256);
+			image.crossOrigin = "Anonymous";
 			image.onload = function () {
 				let canvasEl = document.getElementById("texture");
-				canvasEl.width = 600;
-				canvasEl.height = 266;
+				canvasEl.width = 256;
+				canvasEl.height = 256;
 				// gl = canvasEl.getContext("webgl");
 				// gl = WebGLDebugUtils.makeDebugContext(gl, throwOnGLError, logAndValidate);
 				let ctx = canvasEl.getContext("2d");
@@ -61,7 +63,7 @@
 
 				return resolve(texture);
 			}
-			image.src = "./../resources/textures/mario.png"
+		  image.src = "https://tile.openstreetmap.org/7/63/42.png"
 		});
 	}
 })();
