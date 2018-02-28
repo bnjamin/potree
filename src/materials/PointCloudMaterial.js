@@ -527,13 +527,13 @@ Potree.PointCloudMaterial = class PointCloudMaterial extends THREE.RawShaderMate
 	}
 
 	get texture() {
-        return this.uniforms.texture.value;
-    }
-    set texture(value) {
-        this.uniforms.texture.value = value;
-        this.updateShaderSource();
+		return this.uniforms.texture.value;
+	}
 
-    }
+	set texture(value) {
+		this.uniforms.texture.value = value;
+		this.updateShaderSource();
+	}
 
 	get classification () {
 		return this._classification;

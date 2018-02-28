@@ -255,6 +255,21 @@ Potree.PointCloudOctree = class extends Potree.PointCloudTree {
 		material.near = camera.near;
 		material.far = camera.far;
 		material.uniforms.octreeSize.value = this.pcoGeometry.boundingBox.getSize().x;
+		if (this.mapTextureManager) {
+			material.texture = this.mapTextureManager.mapTexture
+		}
+	}
+
+	set usesMapTexture(value) {
+    if (value) {
+			this.mapTextureManager = new Potree.MapTextureManager(
+				this.projection,
+				this.material.bbMin,
+				this.material.bbMax
+			);
+		} else {
+			this.mapTextureManager = null;
+		}
 	}
 
 	computeVisibilityTextureData(nodes, camera){

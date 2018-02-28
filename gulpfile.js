@@ -58,6 +58,7 @@ let paths = {
 		"src/TextSprite.js",
 		"src/AnimationPath.js",
 		"src/Version.js",
+		"src/MapTextureManager.js",
 		"src/utils/Measure.js",
 		"src/utils/MeasuringTool.js",
 		"src/utils/Profile.js",
