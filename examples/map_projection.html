@@ -33,35 +33,6 @@
 	<script src="../build/potree/potree.js"></script>
 	<script src="../libs/plasio/js/laslaz.js"></script>
 
-<script id="vs" type="x-shader/x-vertex">
-varying vec2 vUv;
-
-void main() {
-    vUv = uv;
-
-    gl_Position =   projectionMatrix * 
-                    modelViewMatrix * 
-                    vec4(position,1.0);
-}
-</script>
-<script id="fs" type="x-shader/x-vertex">
-
-#extension GL_EXT_frag_depth : enable
-
-uniform sampler2D depthMap;
-uniform sampler2D texture;
-
-varying vec2 vUv;
-
-void main() {
-    vec4 color = texture2D(texture, vUv); 
-    float depth = texture2D(depthMap, vUv).g; 
-	color = color / color.w;
-    gl_FragColor = color; 
-	
-	gl_FragDepthEXT = depth;
-}
-</script>
 	<!-- INCLUDE ADDITIONAL DEPENDENCIES HERE -->
 	<!-- INCLUDE SETTINGS HERE -->
 
@@ -69,7 +40,7 @@ void main() {
 		<div id="potree_render_area"></div>
 	</div>
 
-	<canvas id="texture" width="600" height="266" style="height: 266px; width: 600px; position: fixed; right: 0px; bottom: 0px; z-index: 1;"></canvas>
+	<canvas id="texture" width="256" height="256" style="height: 256px; width: 256px; position: fixed; right: 0px; bottom: 0px; z-index: 1;"></canvas>
 
 	<script src="./js/webgl-debug.js"></script>
 

@@ -1,10 +1,9 @@
 (function () {
 
 	// add EPSG:21781 to the proj4 projection database
-	proj4.defs('EPSG:21781', "+proj=somerc +lat_0=46.95240555555556 +lon_0=7.439583333333333 +k_0=1 +x_0=600000 +y_0=200000 +ellps=bessel +towgs84=674.4,15.1,405.3,0,0,0,0 +units=m +no_defs ");
-	var swiss = proj4.defs("EPSG:21781");
+	proj4.defs('test', "+proj=somerc +lat_0=46.95240555555556 +lon_0=7.439583333333333 +k_0=1 +x_0=600000 +y_0=200000 +ellps=bessel +towgs84=674.4,15.1,405.3,0,0,0,0 +units=m +no_defs ");
+	var swiss = proj4.defs("test");
 	var WGS84 = proj4.defs("WGS84");
-	var webMercator = proj4.defs("EPSG:3857");
 
 	// extent of the point cloud (with altitude) in EPSG:21781 / Swiss Coordinate System
 	var minSwiss = [589500, 231300, 722.505];
@@ -65,7 +64,6 @@
 		let lon2 = cord2[0];
 		dLat = lat2 - lat1;
 		dLon = lon2 - lon1;
-		debugger;
 		let distance = CalcDistanceBetween(lat1, lon1, lat2, lon2);
 		let meterPrPixel = distance / (Math.sqrt(Math.pow(numberOfXPixel, 2) + (dLat / dLon * Math.pow(numberOfYPixel, 2))));
 
@@ -75,6 +73,7 @@
 			pixelLength = Math.abs(156543.03 * Math.cos(lat2)) / Math.pow(2, zoom);
 			zoom++;
 		}
+		zoom--;
 		zoom--;
 		zoom--;
 
@@ -99,15 +98,17 @@
 		return Value * Math.PI / 180;
 	}
 
-	function calculateMaptile(baseUrl) {
+	function calculateMaptile(topCorner, lowerConer) {
 		let zoom = findZoomLevel(minWeb, maxWeb, 256, 256);
 		var center = [(maxWeb[0] + minWeb[0]) / 2, (maxWeb[1] + minWeb[1]) / 2];
-		let testLong = tile2lat(63, 7);
-		let testLat = tile2lat(42, 7);
+
 		let X = long2tile(center[0], zoom);
 		let Y = lat2tile(center[1], zoom);
-		debugger;
-		return baseUrl + "/" + zoom + "/" + X + "/" + Y + ".png"
+		return {
+			x: X,
+			y: Y,
+			zoom: zoom
+		};
 	}
 
 	function tile2long(x, z) {
@@ -118,9 +119,15 @@
 		return (180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n))));
 	}
 
+	var baseUrl = "https://tile.openstreetmap.org";
+
 	function getTexture() {
 		return new Promise((resolve, reject) => {
 			let image = new Image(256, 256);
+			let result = calculateMaptile(minWeb, maxWeb);
+			let X = result.x;
+			let Y = result.y;
+			let zoom = result.zoom;
 			image.crossOrigin = "Anonymous";
 			image.onload = function () {
 				let canvasEl = document.getElementById("texture");
@@ -129,14 +136,22 @@
 				// gl = canvasEl.getContext("webgl");
 				// gl = WebGLDebugUtils.makeDebugContext(gl, throwOnGLError, logAndValidate);
 				let ctx = canvasEl.getContext("2d");
-				ctx.drawImage(this, 0, 0);
+				let northWestCord = [tile2long(X, zoom), tile2lat(Y, zoom)];
+				let southEastCord = [tile2long(X + 1, zoom), tile2lat(Y + 1, zoom)];
+				let dNorth = Math.floor(canvasEl.height * (northWestCord[1] - minWeb[1]) / (northWestCord[1] - southEastCord[1]));
+				let dWest = Math.floor(canvasEl.width * (northWestCord[0] - minWeb[0]) / (northWestCord[0] - southEastCord[0]));
+				let dSouth = Math.floor(canvasEl.height * (maxWeb[1] - southEastCord[1]) / (northWestCord[1] - southEastCord[1]));
+				let dEast = Math.floor(canvasEl.width * (maxWeb[0] - southEastCord[0]) / (northWestCord[0] - southEastCord[0]));
+				debugger;
+				ctx.drawImage(this, dWest, dNorth, (canvasEl.width - (dWest + dEast)), (canvasEl.height - (dNorth + dSouth)), 0, 0, canvasEl.width, canvasEl.height);
 				let texture = new THREE.CanvasTexture(canvasEl);
 				texture.minFilter = THREE.LinearFilter;
 				texture.needsUpdate = true;
 
 				return resolve(texture);
 			}
-			image.src = calculateMaptile("https://tile.openstreetmap.org");
+			// console.log("https://tile.openstreetmap.org" + "/" + zoom + "/" + X + "/" + Y + ".png");
+			image.src = "https://tile.openstreetmap.org" + "/" + zoom + "/" + X + "/" + Y + ".png";
 		});
 	}
 })();
