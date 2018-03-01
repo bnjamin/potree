@@ -131,12 +131,9 @@ Potree.MapTextureManager = class MapTextureManager {
 
 			}
 			// console.log("https://tile.openstreetmap.org" + "/" + zoom + "/" + X + "/" + Y + ".png");
-			image.src = "https://tile.openstreetmap.org" + "/" + zoom + "/" + X + "/" + Y + ".png";
+			image.src = Potree.MapTextureManagerSettings.tileServer + "/" + zoom + "/" + X + "/" + Y + ".png";
 		}
 
 		getTexture();
 	}
-
-	
-
 }
