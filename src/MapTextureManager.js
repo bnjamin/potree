@@ -7,18 +7,10 @@ Potree.MapTextureManager = class MapTextureManager {
 		this.projection = projection;
 		this.bbMin = bbMin;
 		this.bbMax = bbMax;
-		this._mapCanvas = document.createElement("canvas");
-		this._mapCanvas.width = bbMax[0] - bbMin[0];
-		this._mapCanvas.height = bbMax[1] - bbMin[1];
-		let canvas = this._mapCanvas;
-		let width = 100;
-		let height = 100;
-		canvas.width = width;
-		canvas.height = height;
-
-		let ctx = canvas.getContext("2d");
-		ctx.fillStyle = "#FF0000";
-		ctx.fillRect(0, 0, width, height);
+		this._mapCanvas = document.getElementById("texture");
+		let ratio = (bbMax[0] - bbMin[0]) / (bbMax[1] - bbMin[1]);
+		this._mapCanvas.width = 256 * ratio;
+		this._mapCanvas.height = 256;
 
 		this.updateWithTile();
 	}
@@ -32,7 +24,7 @@ Potree.MapTextureManager = class MapTextureManager {
 	}
 
 	updateWithTile() {
-		let self = this;
+		var self = this;
 		proj4.defs('test', this.projection);
 		var swiss = proj4.defs("test");
 		var WGS84 = proj4.defs("WGS84");
@@ -43,27 +35,23 @@ Potree.MapTextureManager = class MapTextureManager {
 		function long2tile(lon, zoom) { return (Math.floor((lon + 180) / 360 * Math.pow(2, zoom))); }
 		function lat2tile(lat, zoom) { return (Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom))); }
 
-		function findZoomLevel(cord1, cord2, numberOfXPixel, numberOfYPixel) {
-			let lat1 = cord1[1];
-			let lon1 = cord1[0];
-			let lat2 = cord2[1];
-			let lon2 = cord2[0];
-			let dLat = lat2 - lat1;
-			let dLon = lon2 - lon1;
-			let distance = CalcDistanceBetween(lat1, lon1, lat2, lon2);
-			let meterPrPixel = distance / (Math.sqrt(Math.pow(numberOfXPixel, 2) + (dLat / dLon * Math.pow(numberOfYPixel, 2))));
-
-			let zoom = 0;
-			let pixelLength = 156543.03;
-			while (pixelLength / 2 > meterPrPixel) {
-				pixelLength = Math.abs(156543.03 * Math.cos(lat2)) / Math.pow(2, zoom);
-				zoom++;
+		function findZoomLevel(minCoord, maxCoord) {
+			let zoom = 18;
+			while (zoom > 1) {
+				if (doesTileCoverBothCoord(minCoord, maxCoord, zoom)) {
+					return zoom;
+				}
+				zoom--;
 			}
-			zoom--;
-			zoom--;
-			zoom--;
-
 			return zoom;
+		}
+
+		function doesTileCoverBothCoord(minCoord, maxCoord, zoom) {
+			let X_min = long2tile(minCoord[0], zoom);
+			let Y_min = lat2tile(minCoord[1], zoom);
+			let X_max = long2tile(maxCoord[0], zoom);
+			let Y_max = lat2tile(maxCoord[1], zoom);
+			return (X_min === X_max && Y_min === Y_max);
 		}
 
 		function CalcDistanceBetween(lat1, lon1, lat2, lon2) {
@@ -84,18 +72,89 @@ Potree.MapTextureManager = class MapTextureManager {
 			return Value * Math.PI / 180;
 		}
 
-		function calculateMaptile(topCorner, lowerConer) {
-			let zoom = findZoomLevel(minWeb, maxWeb, 256, 256);
-			var center = [(maxWeb[0] + minWeb[0]) / 2, (maxWeb[1] + minWeb[1]) / 2];
-
-			let X = long2tile(center[0], zoom);
-			let Y = lat2tile(center[1], zoom);
-			return {
-				x: X,
-				y: Y,
-				zoom: zoom
-			};
+		function calculateMaptile(minCoord, maxCoord) {
+			let zoom = findZoomLevel(minCoord, maxCoord);
+			let Tiles = getTiles(zoom, minCoord, maxCoord);
+			return Tiles;
 		}
+
+		function getTiles(zoom, minCoord, maxCoord) {
+			let minX = long2tile(minCoord[0], zoom);
+			let minY = lat2tile(minCoord[1], zoom);
+			let maxX = long2tile(maxCoord[0], zoom);
+			let maxY = lat2tile(maxCoord[1], zoom);
+			let arrayX = [minX, maxX].sort();
+			let arrayY = [minY, maxY].sort();
+			let tiles = [];
+			for (var x = arrayX[0]; x <= arrayX[1]; x++) {
+				for (var y = arrayY[0]; y <= arrayY[1]; y++) {
+					tiles.push({ X: x, Y: y, zoom: zoom });
+				}
+			}
+			return tiles;
+		}
+
+		function downloadImages(Tiles) {
+			let promises = Tiles.map(function (tile, i) {
+				return new Promise((resolve, reject) => {
+					let image = new Image(256, 256);
+					image.crossOrigin = "Anonymous";
+					image.onload = function () {
+						resolve({ tile: tile, image: image });
+					}
+					image.src = "https://tile.openstreetmap.org" + "/" + tile.zoom + "/" + tile.X + "/" + tile.Y + ".png";
+				})
+			});
+			return Promise.all(promises).then(tileImages => tileImages);
+		}
+
+		function mergeImagesIntoOffscreenCanvas(tileImages) {
+			let result = calculateDirection(tiles);
+			// offscreenCanvas.width = 256 * result.tilesInXDirection;
+			// offscreenCanvas.height = 256 * result.tilesInYDirection;
+			for (let i = 0; i < images.length; i++) {
+				drawTileOnCanvas(this._mapCanvas, tileImages, minWeb, maxWeb);
+			}
+			return offscreenCanvas;
+		}
+
+		function calculateDirection(tiles) {
+			let tilesInXDirection = [...new Set(tiles.map(el => el.X))].length;
+			let tilesInYDirection = [...new Set(tiles.map(el => el.Y))].length;
+
+			return {
+				tilesInXDirection: tilesInXDirection,
+				tilesInYDirection: tilesInYDirection
+			};
+
+		}
+
+		function drawTileOnCanvas(canvas, image, tile, minCoord, maxCoord) {
+			let ctx = canvas.getContext("2d");
+			let longTile = tile2long(tile.X, tile.zoom);
+			let latTile = tile2lat(tile.Y, tile.zoom);
+			let longTileToRight = tile2long(tile.X + 1, tile.zoom);
+			let latTileBottom = tile2lat(tile.Y + 1, tile.zoom);
+			let minTileCoord = [longTile, latTile];
+			let height = [maxCoord[1] - minCoord[1], latTile - latTileBottom].sort().slice(-1)[0];
+			let width = [maxCoord[0] - minCoord[0], longTile - longTileToRight].sort().slice(-1)[0];
+			let dY = Math.floor(canvas.height * (maxCoord[1] - latTile) / height);
+			let dX = Math.floor(canvas.width * (minCoord[0] - longTile) / width);
+			let sY = Math.floor(image.height * (latTile - maxCoord[1]) / height);
+			let sX = Math.floor(image.width * (longTile - minCoord[0]) / width);
+
+			let northWestCord = [tile2long(tile.X, tile.zoom), tile2lat(tile.Y, tile.zoom)];
+			let southEastCord = [tile2long(tile.X + 1, tile.zoom), tile2lat(tile.Y + 1, tile.zoom)];
+			let SY1 = Math.floor(canvas.height * (northWestCord[1] - maxWeb[1]) / (northWestCord[1] - southEastCord[1]));
+			let SX1 = Math.floor(256 * (northWestCord[0] - minWeb[0]) / (northWestCord[0] - southEastCord[0]));
+			let dSouth = Math.floor(canvas.height * (minWeb[1] - southEastCord[1]) / (northWestCord[1] - southEastCord[1]));
+			let dEast = Math.floor(256 * (maxWeb[0] - southEastCord[0]) / (northWestCord[0] - southEastCord[0]));
+			debugger;
+			// let sY = 0;
+			// let sX = 0;
+			ctx.drawImage(image, sX, sY, image.width, image.height, dX, dY, image.width, image.height);
+		}
+
 
 		function tile2long(x, z) {
 			return (x / Math.pow(2, z) * 360 - 180);
@@ -108,30 +167,27 @@ Potree.MapTextureManager = class MapTextureManager {
 		var baseUrl = "https://tile.openstreetmap.org";
 
 		function getTexture() {
-			let image = new Image(256, 256);
-			let result = calculateMaptile(minWeb, maxWeb);
-			let X = result.x;
-			let Y = result.y;
-			let zoom = result.zoom;
-			image.crossOrigin = "Anonymous";
-			image.onload = function () {
+			// let self = this;
+			let Points = calculateMaptile(minWeb, maxWeb);
+			let zoom = Points[0].zoom;
+			downloadImages(Points).then(TileImages => {
 				let canvasEl = self._mapCanvas;
-				canvasEl.width = 256;
-				canvasEl.height = 256;
-				// gl = canvasEl.getContext("webgl");
-				// gl = WebGLDebugUtils.makeDebugContext(gl, throwOnGLError, logAndValidate);
-				let ctx = canvasEl.getContext("2d");
-				let northWestCord = [tile2long(X, zoom), tile2lat(Y, zoom)];
-				let southEastCord = [tile2long(X + 1, zoom), tile2lat(Y + 1, zoom)];
-				let dNorth = Math.floor(canvasEl.height * (northWestCord[1] - minWeb[1]) / (northWestCord[1] - southEastCord[1]));
-				let dWest = Math.floor(canvasEl.width * (northWestCord[0] - minWeb[0]) / (northWestCord[0] - southEastCord[0]));
-				let dSouth = Math.floor(canvasEl.height * (maxWeb[1] - southEastCord[1]) / (northWestCord[1] - southEastCord[1]));
-				let dEast = Math.floor(canvasEl.width * (maxWeb[0] - southEastCord[0]) / (northWestCord[0] - southEastCord[0]));
-				ctx.drawImage(image, dWest, dNorth, (canvasEl.width - (dWest + dEast)), (canvasEl.height - (dNorth + dSouth)), 0, 0, canvasEl.width, canvasEl.height);
+				drawTileOnCanvas(canvasEl, TileImages[0].image, TileImages[0].tile, minWeb, maxWeb);
+				// let ctx = canvasEl.getContext("2d");
+				// let northWestCord = [tile2long(Points[0].X, zoom), tile2lat(Points[0].Y, zoom)];
+				// let southEastCord = [tile2long(Points[0].X + 1, zoom), tile2lat(Points[0].Y + 1, zoom)];
+				// let northEastInner = maxWeb;
+				// let southWestInner = minWeb;
+				// let dY = Math.floor(canvasEl.height * (northWestCord[1] - maxWeb[1]) / (northWestCord[1] - southEastCord[1]));
+				// let dX = Math.floor(256 * (northWestCord[0] - minWeb[0]) / (northWestCord[0] - southEastCord[0]));
+				// let dSouth = Math.floor(canvasEl.height * (minWeb[1] - southEastCord[1]) / (northWestCord[1] - southEastCord[1]));
+				// let dEast = Math.floor(256 * (maxWeb[0] - southEastCord[0]) / (northWestCord[0] - southEastCord[0]));
+				// let imageWidth = (256 - (dX + dEast))
+				// let imageHeight = (256 - (dNorth + dY))
+				// ctx.drawImage(TileImages[0].image, dX, dY, imageWidth, imageHeight, 0, 0, canvasEl.width, canvasEl.height);
+				//ctx.drawImage(TileImages[0].image, 0, 0, canvasEl.width, canvasEl.height);
 
-			}
-			// console.log("https://tile.openstreetmap.org" + "/" + zoom + "/" + X + "/" + Y + ".png");
-			image.src = Potree.MapTextureManagerSettings.tileServer + "/" + zoom + "/" + X + "/" + Y + ".png";
+			});
 		}
 
 		getTexture();
