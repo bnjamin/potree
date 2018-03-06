@@ -11,7 +11,10 @@ Potree.MapTextureManager = class MapTextureManager {
 		let ratio = (bbMax[0] - bbMin[0]) / (bbMax[1] - bbMin[1]);
 		this._mapCanvas.width = 256 * ratio;
 		this._mapCanvas.height = 256;
-
+		let ctx = this._mapCanvas.getContext("2d");
+		ctx.rect(0, 0, this._mapCanvas.width, this._mapCanvas.height);
+		ctx.fillStyle = "red";
+		ctx.fill();
 		this.updateWithTile();
 	}
 
@@ -35,6 +38,9 @@ Potree.MapTextureManager = class MapTextureManager {
 		function long2tile(lon, zoom) { return (Math.floor((lon + 180) / 360 * Math.pow(2, zoom))); }
 		function lat2tile(lat, zoom) { return (Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom))); }
 
+		function long2tileDouble(lon, zoom) { return (((lon + 180) / 360 * Math.pow(2, zoom))); }
+		function lat2tileDouble(lat, zoom) { return (((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom))); }
+
 		function findZoomLevel(minCoord, maxCoord) {
 			let zoom = 18;
 			while (zoom > 1) {
@@ -52,24 +58,6 @@ Potree.MapTextureManager = class MapTextureManager {
 			let X_max = long2tile(maxCoord[0], zoom);
 			let Y_max = lat2tile(maxCoord[1], zoom);
 			return (X_min === X_max && Y_min === Y_max);
-		}
-
-		function CalcDistanceBetween(lat1, lon1, lat2, lon2) {
-			//Radius of the earth in:  1.609344 miles,  6371 km  | var R = (6371 / 1.609344);
-			var R = 3958.7558657440545; // Radius of earth in Miles 
-			var dLat = toRad(lat2 - lat1);
-			var dLon = toRad(lon2 - lon1);
-			var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-				Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-				Math.sin(dLon / 2) * Math.sin(dLon / 2);
-			var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-			var d = 1000 * R * c;
-			return d;
-		}
-
-		function toRad(Value) {
-			/** Converts numeric degrees to radians */
-			return Value * Math.PI / 180;
 		}
 
 		function calculateMaptile(minCoord, maxCoord) {
@@ -108,51 +96,78 @@ Potree.MapTextureManager = class MapTextureManager {
 			return Promise.all(promises).then(tileImages => tileImages);
 		}
 
-		function mergeImagesIntoOffscreenCanvas(tileImages) {
-			let result = calculateDirection(tiles);
-			// offscreenCanvas.width = 256 * result.tilesInXDirection;
-			// offscreenCanvas.height = 256 * result.tilesInYDirection;
-			for (let i = 0; i < images.length; i++) {
-				drawTileOnCanvas(this._mapCanvas, tileImages, minWeb, maxWeb);
-			}
-			return offscreenCanvas;
-		}
-
-		function calculateDirection(tiles) {
-			let tilesInXDirection = [...new Set(tiles.map(el => el.X))].length;
-			let tilesInYDirection = [...new Set(tiles.map(el => el.Y))].length;
-
-			return {
-				tilesInXDirection: tilesInXDirection,
-				tilesInYDirection: tilesInYDirection
-			};
-
-		}
 
 		function drawTileOnCanvas(canvas, image, tile, minCoord, maxCoord) {
 			let ctx = canvas.getContext("2d");
-			let longTile = tile2long(tile.X, tile.zoom);
-			let latTile = tile2lat(tile.Y, tile.zoom);
-			let longTileToRight = tile2long(tile.X + 1, tile.zoom);
-			let latTileBottom = tile2lat(tile.Y + 1, tile.zoom);
-			let minTileCoord = [longTile, latTile];
-			let height = [maxCoord[1] - minCoord[1], latTile - latTileBottom].sort().slice(-1)[0];
-			let width = [maxCoord[0] - minCoord[0], longTile - longTileToRight].sort().slice(-1)[0];
-			let dY = Math.floor(canvas.height * (maxCoord[1] - latTile) / height);
-			let dX = Math.floor(canvas.width * (minCoord[0] - longTile) / width);
-			let sY = Math.floor(image.height * (latTile - maxCoord[1]) / height);
-			let sX = Math.floor(image.width * (longTile - minCoord[0]) / width);
+			let Y_values = [lat2tileDouble(minCoord[1], tile.zoom), lat2tileDouble(maxCoord[1], tile.zoom)];
+			let Y_min = Math.min(...Y_values);
+			let X_values = [long2tileDouble(minCoord[0], tile.zoom), long2tileDouble(maxCoord[0], tile.zoom)]
+			let X_min = Math.min(...X_values);
+			let Y_max = Math.max(...Y_values);
+			let X_max = Math.max(...X_values);
 
-			let northWestCord = [tile2long(tile.X, tile.zoom), tile2lat(tile.Y, tile.zoom)];
-			let southEastCord = [tile2long(tile.X + 1, tile.zoom), tile2lat(tile.Y + 1, tile.zoom)];
-			let SY1 = Math.floor(canvas.height * (northWestCord[1] - maxWeb[1]) / (northWestCord[1] - southEastCord[1]));
-			let SX1 = Math.floor(256 * (northWestCord[0] - minWeb[0]) / (northWestCord[0] - southEastCord[0]));
-			let dSouth = Math.floor(canvas.height * (minWeb[1] - southEastCord[1]) / (northWestCord[1] - southEastCord[1]));
-			let dEast = Math.floor(256 * (maxWeb[0] - southEastCord[0]) / (northWestCord[0] - southEastCord[0]));
-			debugger;
-			// let sY = 0;
-			// let sX = 0;
-			ctx.drawImage(image, sX, sY, image.width, image.height, dX, dY, image.width, image.height);
+			let isTop = Y_min >= tile.Y;
+			let isBottom = Y_max <= tile.Y + 1;
+			let isLeft = X_min >= tile.X;
+			let isRight = X_max <= tile.X + 1;
+
+			if (isTop && !isBottom) {
+				var sY = image.height * (Y_min - tile.Y);
+				var dY = 0;
+				var imageHeightToBeDrawn = image.height - sY;
+				debugger;
+				var drawingHeight = imageHeightToBeDrawn * (1 / (Y_max - Y_min));
+
+			} else if (isBottom && !isTop) {
+				var sY = 0;
+				var dY = canvas.height * (tile.Y - Y_min) / (Y_max - Y_min);
+				var sY_bottom = image.height * (1 - (Y_max - tile.Y));
+				var imageHeightToBeDrawn = image.height - sY_bottom;
+				var drawingHeight = imageHeightToBeDrawn * (1 / (Y_max - Y_min));
+
+			} else if (!isTop && !isBottom) {
+				var sY = 0;
+				var imageHeightToBeDrawn = image.height;
+				var dY = canvas.height * (tile.Y - Y_min) / (Y_max - Y_min);
+				var drawingHeight = canvas.height / (Y_max - Y_min);
+
+			} else if (isBottom && isTop) {
+				var sY_bottom = image.height * (tile.Y + 1 - Y_max);
+				var sY = image.height * (Y_min - tile.Y);
+				var imageHeightToBeDrawn = image.height - (sY + sY_bottom);
+				var dY = 0;
+				var drawingHeight = canvas.height;
+			}
+
+			if (isLeft && !isRight) {
+				var dX = 0;
+				var sX = image.width * (X_min - tile.X);
+				var imageWidthToBeDrawn = image.width - sX;
+				var drawingWidth = imageWidthToBeDrawn * (canvas.width / image.width) * (1 / (X_max - X_min));
+			} else if (isRight && !isLeft) {
+				var dX = canvas.width * (tile.X - X_min) / (X_max - X_min);
+				var sX = 0;
+				var sX_Right = image.width * (1 - (X_max - tile.X));
+				var imageWidthToBeDrawn = image.width - sX_Right;
+				var drawingWidth = imageWidthToBeDrawn * (canvas.width / image.width) * (1 / (X_max - X_min));
+
+			} else if (!isRight && !isLeft) {
+				var sX = 0;
+				var imageWidthToBeDrawn = image.width;
+				var dX = canvas.width * (tile.X - X_min) / (X_max - X_min);
+				var drawingWidth = canvas.width / (X_max - X_min);
+			} else if (isLeft && isRight) {
+				var sX = image.width * (X_min - tile.X);
+				var sX_Right = image.width * (tile.X + 1 - X_max);
+				var imageWidthToBeDrawn = image.width - (sX + sX_Right);
+				var dX = 0;
+				var drawingWidth = canvas.width;
+			}
+
+			ctx.drawImage(image, sX, sY, imageWidthToBeDrawn, imageHeightToBeDrawn, dX, dY, drawingWidth, drawingHeight);
+			ctx.strokeStyle = "black";
+			ctx.strokeRect(dX, dY, drawingWidth, drawingHeight);
+
 		}
 
 
@@ -172,21 +187,10 @@ Potree.MapTextureManager = class MapTextureManager {
 			let zoom = Points[0].zoom;
 			downloadImages(Points).then(TileImages => {
 				let canvasEl = self._mapCanvas;
-				drawTileOnCanvas(canvasEl, TileImages[0].image, TileImages[0].tile, minWeb, maxWeb);
-				// let ctx = canvasEl.getContext("2d");
-				// let northWestCord = [tile2long(Points[0].X, zoom), tile2lat(Points[0].Y, zoom)];
-				// let southEastCord = [tile2long(Points[0].X + 1, zoom), tile2lat(Points[0].Y + 1, zoom)];
-				// let northEastInner = maxWeb;
-				// let southWestInner = minWeb;
-				// let dY = Math.floor(canvasEl.height * (northWestCord[1] - maxWeb[1]) / (northWestCord[1] - southEastCord[1]));
-				// let dX = Math.floor(256 * (northWestCord[0] - minWeb[0]) / (northWestCord[0] - southEastCord[0]));
-				// let dSouth = Math.floor(canvasEl.height * (minWeb[1] - southEastCord[1]) / (northWestCord[1] - southEastCord[1]));
-				// let dEast = Math.floor(256 * (maxWeb[0] - southEastCord[0]) / (northWestCord[0] - southEastCord[0]));
-				// let imageWidth = (256 - (dX + dEast))
-				// let imageHeight = (256 - (dNorth + dY))
-				// ctx.drawImage(TileImages[0].image, dX, dY, imageWidth, imageHeight, 0, 0, canvasEl.width, canvasEl.height);
-				//ctx.drawImage(TileImages[0].image, 0, 0, canvasEl.width, canvasEl.height);
+				TileImages.forEach(tileImage => {
+					drawTileOnCanvas(canvasEl, tileImage.image, tileImage.tile, minWeb, maxWeb);
 
+				});
 			});
 		}
 
