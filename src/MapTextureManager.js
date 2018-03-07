@@ -9,8 +9,9 @@ Potree.MapTextureManager = class MapTextureManager {
 		this.bbMax = bbMax;
 		this._mapCanvas = document.getElementById("texture");
 		let ratio = (bbMax[0] - bbMin[0]) / (bbMax[1] - bbMin[1]);
-		this._mapCanvas.width = 256 * ratio;
-		this._mapCanvas.height = 256;
+		let minHeight = 256;
+		this._mapCanvas.width = minHeight * ratio;
+		this._mapCanvas.height = minHeight;
 		let ctx = this._mapCanvas.getContext("2d");
 		ctx.rect(0, 0, this._mapCanvas.width, this._mapCanvas.height);
 		ctx.fillStyle = "red";
@@ -22,6 +23,23 @@ Potree.MapTextureManager = class MapTextureManager {
 		this._minWeb = proj4(swiss, WGS84, [this.bbMin[0], this.bbMin[1]]);
 		this._maxWeb = proj4(swiss, WGS84, [this.bbMax[0], this.bbMax[1]]);
 		this.updateTexture(this._minWeb, this._maxWeb);
+		this.geometryNodeIds = new Set();
+		this._cachedTileImages = [];
+		this._currentMaxZoom = this.getTiles(this._minWeb, this._maxWeb)[0].zoom;
+	}
+
+	updateTextureFor(visibleNodes, matrixWorld) {
+		visibleNodes.forEach(visibleNode => {
+			if (!this.geometryNodeIds.has(visibleNode.geometryNode.id)) {
+				this.geometryNodeIds.add(visibleNode.geometryNode.id);
+				var swiss = proj4.defs("test");
+				var WGS84 = proj4.defs("WGS84");
+				let nodeBox = Potree.utils.computeTransformedBoundingBox(visibleNode.geometryNode.boundingBox, matrixWorld);
+				let minWeb = proj4(swiss, WGS84, [nodeBox.min.x, nodeBox.min.y]);
+				let maxWeb = proj4(swiss, WGS84, [nodeBox.max.x, nodeBox.max.y]);
+				this.updateTexture(minWeb, maxWeb);
+			}
+		});
 	}
 
 	updateTexture(minWeb, maxWeb) {
@@ -30,7 +48,21 @@ Potree.MapTextureManager = class MapTextureManager {
 		let tilePromises = this.tilePromisesFor(tiles);
 		tilePromises.forEach(tilePromise => {
 			tilePromise.then(tileImage => {
-				this.drawTileOnCanvas(canvasEl, tileImage.image, tileImage.tile, minWeb, maxWeb);
+				if (tileImage.tile.zoom > this._currentMaxZoom) {
+					this.resizeCanvasTo(tileImage.tile.zoom);
+				}
+				this._cachedTileImages.push(tileImage);
+				this._cachedTileImages.sort((tileImage1, tileImage2) => {
+					if (tileImage1.tile.zoom >= tileImage2.tile.zoom) {
+						return 1;
+					} else {
+						return -1;
+					}
+				});
+
+				this._cachedTileImages.forEach(tileImage => {
+					this.drawTileOnCanvas(canvasEl, tileImage.image, tileImage.tile);
+				});
 			});
 		});
 	}
@@ -88,10 +120,10 @@ Potree.MapTextureManager = class MapTextureManager {
 	}
 
 
-	drawTileOnCanvas(canvas, image, tile, minCoord, maxCoord) {
-		let Y_values = [this.lat2tileDouble(minCoord[1], tile.zoom), this.lat2tileDouble(maxCoord[1], tile.zoom)];
+	drawTileOnCanvas(canvas, image, tile) {
+		let Y_values = [this.lat2tileDouble(this._minWeb[1], tile.zoom), this.lat2tileDouble(this._maxWeb[1], tile.zoom)];
 		let Y_min = Math.min(...Y_values);
-		let X_values = [this.long2tileDouble(minCoord[0], tile.zoom), this.long2tileDouble(maxCoord[0], tile.zoom)]
+		let X_values = [this.long2tileDouble(this._minWeb[0], tile.zoom), this.long2tileDouble(this._maxWeb[0], tile.zoom)]
 		let X_min = Math.min(...X_values);
 		let Y_max = Math.max(...Y_values);
 		let X_max = Math.max(...X_values);
@@ -105,15 +137,14 @@ Potree.MapTextureManager = class MapTextureManager {
 			var sY = image.height * (Y_min - tile.Y);
 			var dY = 0;
 			var imageHeightToBeDrawn = image.height - sY;
-			var drawingHeight = imageHeightToBeDrawn * (1 / (Y_max - Y_min));
+			var drawingHeight = imageHeightToBeDrawn * (canvas.height / image.height) * (1 / (Y_max - Y_min));
 
 		} else if (isBottom && !isTop) {
 			var sY = 0;
 			var dY = canvas.height * (tile.Y - Y_min) / (Y_max - Y_min);
 			var sY_bottom = image.height * (1 - (Y_max - tile.Y));
 			var imageHeightToBeDrawn = image.height - sY_bottom;
-			var drawingHeight = imageHeightToBeDrawn * (1 / (Y_max - Y_min));
-
+			var drawingHeight = imageHeightToBeDrawn * (canvas.height / image.height) * (1 / (Y_max - Y_min));
 		} else if (!isTop && !isBottom) {
 			var sY = 0;
 			var imageHeightToBeDrawn = image.height;
@@ -155,8 +186,17 @@ Potree.MapTextureManager = class MapTextureManager {
 
 		let ctx = canvas.getContext("2d");
 		ctx.drawImage(image, sX, sY, imageWidthToBeDrawn, imageHeightToBeDrawn, dX, dY, drawingWidth, drawingHeight);
-		ctx.strokeStyle = "black";
-		ctx.strokeRect(dX, dY, drawingWidth, drawingHeight);
+		//ctx.strokeStyle = "black";
+		//ctx.strokeRect(dX, dY, drawingWidth, drawingHeight);
+	}
+
+	resizeCanvasTo(zoom) {
+		let canvas = this._mapCanvas;
+		let multiplier = Math.pow(2, zoom - this._currentMaxZoom);
+		canvas.width = canvas.width * multiplier;
+		canvas.height = canvas.height * multiplier;
+		this._currentMaxZoom = zoom;
+		console.log(canvas.width, canvas.height)
 	}
 
 };

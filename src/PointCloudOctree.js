@@ -256,6 +256,7 @@ Potree.PointCloudOctree = class extends Potree.PointCloudTree {
 		material.far = camera.far;
 		material.uniforms.octreeSize.value = this.pcoGeometry.boundingBox.getSize().x;
 		if (this.mapTextureManager) {
+			this.mapTextureManager.updateTextureFor(visibleNodes, this.matrixWorld)
 			material.texture = this.mapTextureManager.mapTexture
 		}
 	}
