@@ -1,11 +1,11 @@
 
 
 Potree.TileTextureAtlas = class TileTextureAtlas {
-	constructor(height, width) {
-		this._canvas = document.createElement('canvas');
-		this._canvas.height = height;
-		this._canvas.width = width * 100;
-		this._tiles = Array(100);
+	constructor(tileHeight, tileWidth) {
+		this._canvas = document.getElementById("texture");
+		this._canvas.height = tileHeight;
+		this._canvas.width = tileWidth * Math.pow(2, 7);
+		this._tiles = Array(Math.pow(2, 7));
 	}
 
 	getNumberOfTilesInAtlas() {
@@ -27,7 +27,25 @@ Potree.TileTextureAtlas = class TileTextureAtlas {
 		}
 	}
 
-	getImage(boundingBox, zoomLevel) {
+	get texture() {
+		let texture = new THREE.CanvasTexture(this._canvas);
+		texture.minFilter = THREE.LinearFilter;
+		texture.needsUpdate = true;
+		return texture;
+	}
+
+	hasTile(tile) {
+		let imageTile = this._tiles.filter(e => e.tile.zoomLevel === tile.zoomLevel && e.tile.X === tile.X && e.tile.Y === tile.Y)[0];
+		if (imageTile) {
+			let index = this._tiles.indexOf(imageTile);
+			this._tiles[index].Stamp = new Date();
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	getTileDataFor(geometryNode) {
 		let tile = this._tiles.filter(e => e.zoomLevel === zoomLevel && e.X === X && e.Y === Y);
 		if (tile) {
 			return tile
