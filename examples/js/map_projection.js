@@ -1,6 +1,6 @@
 (function() {
 	if ('serviceWorker' in navigator) {
-		navigator.serviceWorker.register('../../src/workers/serviceworker.js')
+		navigator.serviceWorker.register('../../serviceworker.js')
 			.then(function (reg) {
 				// registration worked
 				console.log('Registration succeeded. Scope is ' + reg.scope);

@@ -58,6 +58,8 @@ let paths = {
 		"src/TextSprite.js",
 		"src/AnimationPath.js",
 		"src/Version.js",
+		"src/TileTextureAtlas.js",
+
 		"src/MapTextureManager.js",
 		"src/utils/Measure.js",
 		"src/utils/MeasuringTool.js",
@@ -134,6 +136,9 @@ let workers = {
 		"src/loader/PointAttributes.js",
 		"src/InterleavedBuffer.js",
 		"src/utils/toInterleavedBufferAttribute.js",
+	],
+	"ServiceWorker": [
+		"src/workers/serviceworker.js"
 	]
 };
 
