@@ -3,9 +3,11 @@
 Potree.TileTextureAtlas = class TileTextureAtlas {
 	constructor(tileHeight, tileWidth) {
 		this._canvas = document.getElementById("texture");
-		this._canvas.height = tileHeight;
-		this._canvas.width = tileWidth * Math.pow(2, 7);
-		this._tiles = Array(Math.pow(2, 7));
+		this._numberOfTilesHeight = Math.pow(2, 0);
+		this._numberOfTilesWidth = Math.pow(2, 6);
+		this._canvas.height = tileHeight * this._numberOfTilesHeight;
+		this._canvas.width = tileWidth * this._numberOfTilesWidth;
+		this._tiles = Array(this._numberOfTilesHeight * this._numberOfTilesWidth);
 	}
 
 	getNumberOfTilesInAtlas() {
@@ -34,6 +36,28 @@ Potree.TileTextureAtlas = class TileTextureAtlas {
 		return texture;
 	}
 
+	getTileDataFor(minX, minY, maxX, maxY, wantedZoomLevel) {
+		let tileIndex = this._tiles.findIndex(tile => {
+			return tile &&
+			tile.tile.X === Math.floor(minX) &&
+			tile.tile.Y === Math.floor(minY) &&
+			tile.tile.zoom === wantedZoomLevel;
+		});
+
+		if (tileIndex !== -1) {
+			return {
+				numberOfTilesWidth: this._numberOfTilesWidth,
+				numberOfTilesHeight: this._numberOfTilesHeight,
+				x: tileIndex,
+				y: 0,
+				xOffset: minX - Math.floor(minX),
+				yOffset: ((Math.floor(maxY) + 1) - maxY),
+				width: maxX - minX,
+				height: maxY - minY
+			}
+		}
+	}
+
 	hasTile(tile) {
 		let imageTile = this._tiles.filter(e => e.tile.zoomLevel === tile.zoomLevel && e.tile.X === tile.X && e.tile.Y === tile.Y)[0];
 		if (imageTile) {
@@ -42,15 +66,6 @@ Potree.TileTextureAtlas = class TileTextureAtlas {
 			return true;
 		} else {
 			return false;
-		}
-	}
-
-	getTileDataFor(geometryNode) {
-		let tile = this._tiles.filter(e => e.zoomLevel === zoomLevel && e.X === X && e.Y === Y);
-		if (tile) {
-			return tile
-		} else {
-			return undefined;
 		}
 	}
 

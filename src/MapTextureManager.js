@@ -31,31 +31,40 @@ function encode(input) {
 }
 
 Potree.MapTextureManager = class MapTextureManager {
-	constructor(projection, bbMin, bbMax) {
+	constructor(projection, matrixWorld) {
 		this.projection = projection;
-		this.bbMin = bbMin;
-		this.bbMax = bbMax;
 		this._textureAtlas = new Potree.TileTextureAtlas(256, 256);
 		proj4.defs('test', this.projection);
 		this._inputCoordinateSystem = proj4.defs("test");
 		this._WGS84 = proj4.defs("WGS84");
-		this._minWeb = proj4(this._inputCoordinateSystem, this._WGS84, [this.bbMin[0], this.bbMin[1]]);
-		this._maxWeb = proj4(this._inputCoordinateSystem, this._WGS84, [this.bbMax[0], this.bbMax[1]]);
+		this._matrixWorld = matrixWorld;
 	}
 
-	getImageCoordinates(boundingBox, matrixWorld) {
-		var swiss = proj4.defs("test");
-		var WGS84 = proj4.defs("WGS84");
-		let nodeBox = Potree.utils.computeTransformedBoundingBox(boundingBox, matrixWorld);
-		let minWeb = proj4(swiss, WGS84, [nodeBox.min.x, nodeBox.min.y]);
-		let minX = this.long2tileDouble(minWeb[0], zoom);
-		let minY = this.lat2tileDouble(minWeb[1], zoom);
+	getTileDataFor(geometryNode) {
+		let nodeBox = Potree.utils.computeTransformedBoundingBox(geometryNode.boundingBox, this._matrixWorld);
+		let minWeb = proj4(this._inputCoordinateSystem, this._WGS84, [nodeBox.min.x, nodeBox.min.y]);
+		let maxWeb = proj4(this._inputCoordinateSystem, this._WGS84, [nodeBox.max.x, nodeBox.max.y]);
+		let wantedZoomLevel = this.getZoomLevel(minWeb, maxWeb);
+		let yValues = [
+			this.lat2tileDouble(minWeb[1], wantedZoomLevel),
+			this.lat2tileDouble(maxWeb[1], wantedZoomLevel)
+		];
+		let xValues = [
+			this.long2tileDouble(minWeb[0], wantedZoomLevel),
+			this.long2tileDouble(maxWeb[0], wantedZoomLevel)
+		];
+		let minY = Math.min(...yValues);
+		let minX = Math.min(...xValues);
+		let maxY = Math.max(...yValues);
+		let maxX = Math.max(...xValues);
+
+		return this._textureAtlas.getTileDataFor(minX, minY, maxX, maxY, wantedZoomLevel);
 	}
 
-	updateTextureFor(visibleNodes, matrixWorld, callback) {
+	updateTextureFor(visibleNodes, callback) {
 		let promises = [];
 		visibleNodes.forEach(node => {
-			let nodeBox = Potree.utils.computeTransformedBoundingBox(node.geometryNode.boundingBox, matrixWorld);
+			let nodeBox = Potree.utils.computeTransformedBoundingBox(node.geometryNode.boundingBox, this._matrixWorld);
 			let minCoord = proj4(this._inputCoordinateSystem, this._WGS84, [nodeBox.min.x, nodeBox.min.y]);
 			let maxCoord = proj4(this._inputCoordinateSystem, this._WGS84, [nodeBox.max.x, nodeBox.max.y]);
 			let tile = this.getTile(minCoord, maxCoord);
@@ -104,6 +113,24 @@ Potree.MapTextureManager = class MapTextureManager {
 			return tiles[0];
 		} else {
 			return this.getTile(minCoord, maxCoord, zoom - 1);
+		}
+	}
+
+	// Finds a zoom level where minWeb and maxWeb is inside the same tile
+	getZoomLevel(minWeb, maxWeb) {
+		let currentZoomLevel = 18;
+
+		while(true) {
+			let minLong = this.long2tile(minWeb[0], currentZoomLevel);
+			let maxLong = this.long2tile(maxWeb[0], currentZoomLevel);
+			let minLat =  this.lat2tile(minWeb[1], currentZoomLevel);
+			let maxLat =  this.lat2tile(maxWeb[1], currentZoomLevel);
+
+			if (minLong === maxLong && minLat === maxLat) {
+				return currentZoomLevel;
+			} else {
+				currentZoomLevel--;
+			}
 		}
 	}
 

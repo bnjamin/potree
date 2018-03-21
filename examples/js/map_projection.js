@@ -1,5 +1,6 @@
 (function() {
-	if ('serviceWorker' in navigator) {
+
+	if (false && 'serviceWorker' in navigator) {
 		navigator.serviceWorker.register('../../serviceworker.js')
 			.then(function (reg) {
 				// registration worked
@@ -11,7 +12,7 @@
 	}
 
 	window.viewer = new Potree.Viewer(document.getElementById("potree_render_area"));
-	Potree.MapTextureManagerSettings.tileServer = "http://localhost:32769/styles/klokantech-basic/";
+	Potree.MapTextureManagerSettings.tileServer = "http://localhost:32775/styles/klokantech-basic/";
 	viewer.setEDLEnabled(true);
 	viewer.setFOV(60);
 	viewer.setPointBudget(1*1000*1000);

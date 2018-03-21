@@ -601,6 +601,8 @@ Potree.Renderer = class Renderer {
 
 		let mat4holder = new Float32Array(16);
 
+		let mapTextureManager = params.mapTextureManager;
+
 		let i = 0;
 		for (let node of nodes) {
 
@@ -708,6 +710,18 @@ Potree.Renderer = class Renderer {
 
 			shader.setUniform1f("uPCIndex", i);
 			// uBBSize
+			let tileData = octree.mapTextureManager.getTileDataFor(node.geometryNode)
+			if (tileData) {
+				shader.setUniform1i("uTileAtlasData.numberOfTilesHeight", tileData.numberOfTilesHeight);
+				shader.setUniform1i("uTileAtlasData.numberOfTilesWidth", tileData.numberOfTilesWidth);
+				shader.setUniform1f("uTileAtlasData.height", tileData.height);
+				shader.setUniform1f("uTileAtlasData.width", tileData.width);
+				shader.setUniform1i("uTileAtlasData.x", tileData.x);
+				shader.setUniform1i("uTileAtlasData.y", tileData.y);
+				shader.setUniform1f("uTileAtlasData.xOffset", tileData.xOffset);
+				shader.setUniform1f("uTileAtlasData.yOffset", tileData.yOffset);
+			}
+
 
 			if (shadowMaps.length > 0) {
 
@@ -1128,6 +1142,8 @@ Potree.Renderer = class Renderer {
 
 			}
 		}
+
+		params.mapTextureManager = octree.mapTextureManager; // TODO: Find a better place for mapTextureManager.
 
 		this.renderNodes(octree, nodes, visibilityTextureData, camera, target, shader, params);
 

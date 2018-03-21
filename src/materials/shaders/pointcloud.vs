@@ -2,6 +2,17 @@
 precision highp float;
 precision highp int;
 
+struct tileAtlasData {
+	int numberOfTilesHeight;
+	int numberOfTilesWidth;
+	float height;
+	float width;
+	int x;
+	int y;
+	float xOffset;
+	float yOffset;
+};
+
 #define max_clip_polygons 8
 #define PI 3.141592653589793
 
@@ -67,6 +78,7 @@ uniform vec3 bbMax;
 uniform float uLevel;
 uniform float uVNStart;
 uniform bool uIsLeafNode;
+uniform tileAtlasData uTileAtlasData;
 
 uniform vec3 uColor;
 uniform float uOpacity;
@@ -415,9 +427,12 @@ vec3 getElevation(){
 }
 
 vec3 getMapColor(){
-	vec4 world = modelMatrix * vec4( position, 1.0 );
-	vec3 relativeCoordinates = (world.xyz - bbMin) / (bbMax - bbMin);
-	vec2 uv = relativeCoordinates.xy;
+	float nodeSize = uOctreeSize / pow(2.0, uLevel);
+	vec2 xyInNode = position.xy / nodeSize;
+	float x = (float(uTileAtlasData.x) + uTileAtlasData.xOffset + (xyInNode.x * uTileAtlasData.width) ) / float(uTileAtlasData.numberOfTilesWidth);
+	float y = (float(uTileAtlasData.y) + uTileAtlasData.yOffset + (xyInNode.y * uTileAtlasData.height) ) / float(uTileAtlasData.numberOfTilesHeight);
+	vec2 uv = vec2(x, y);
+
 	return texture2D(texture, uv).rgb;
 }
 
