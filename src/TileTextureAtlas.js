@@ -3,8 +3,8 @@
 Potree.TileTextureAtlas = class TileTextureAtlas {
 	constructor(tileHeight, tileWidth) {
 		this._canvas = document.getElementById("texture");
-		this._numberOfTilesHeight = Math.pow(2, 0);
-		this._numberOfTilesWidth = Math.pow(2, 6);
+		this._numberOfTilesHeight = Math.pow(2, 2);
+		this._numberOfTilesWidth = Math.pow(2, 5);
 		this._canvas.height = tileHeight * this._numberOfTilesHeight;
 		this._canvas.width = tileWidth * this._numberOfTilesWidth;
 		this._tiles = Array(this._numberOfTilesHeight * this._numberOfTilesWidth);
@@ -45,11 +45,12 @@ Potree.TileTextureAtlas = class TileTextureAtlas {
 		});
 
 		if (tileIndex !== -1) {
+			
 			return {
 				numberOfTilesWidth: this._numberOfTilesWidth,
 				numberOfTilesHeight: this._numberOfTilesHeight,
-				x: tileIndex,
-				y: 0,
+				x: tileIndex % this._numberOfTilesWidth,
+				y: this._numberOfTilesHeight - 1 - Math.floor(tileIndex / this._numberOfTilesWidth),
 				xOffset: minX - Math.floor(minX),
 				yOffset: ((Math.floor(maxY) + 1) - maxY),
 				width: maxX - minX,
@@ -116,7 +117,10 @@ Potree.TileTextureAtlas = class TileTextureAtlas {
 		tileImage.Stamp = new Date();
 		this._tiles[index] = tileImage;
 		let ctx = this._canvas.getContext("2d");
-		ctx.drawImage(tileImage.image, index * tileImage.image.width, 0);
+		let xOffset = (index % this._numberOfTilesWidth) * tileImage.image.width;
+		let yOffset = Math.floor(index / this._numberOfTilesWidth) * tileImage.image.height;
+
+		ctx.drawImage(tileImage.image, xOffset, yOffset);
 	}
 
 
