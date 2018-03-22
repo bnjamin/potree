@@ -59,8 +59,8 @@ let paths = {
 		"src/AnimationPath.js",
 		"src/Version.js",
 		"src/TileTextureAtlas.js",
-
-		"src/MapTextureManager.js",
+		"src/utils/MapTilesConverter.js",
+		"src/MapTextureManager.js",	
 		"src/utils/Measure.js",
 		"src/utils/MeasuringTool.js",
 		"src/utils/Profile.js",
