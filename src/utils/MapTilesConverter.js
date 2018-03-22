@@ -42,10 +42,9 @@ Potree.MapTilesConverter = class MapTilesConverter {
 		return tileData;
 	}
 
-	convertCoordinates(nodeBox){
-		let minCoord = proj4(this._inputCoordinateSystem, this._WGS84, [nodeBox.min.x, nodeBox.min.y]);
-		let maxCoord = proj4(this._inputCoordinateSystem, this._WGS84, [nodeBox.max.x, nodeBox.max.y]);
-
+	convertCoordinates(nodeBox) {
+		let minCoord = this.coordinateTransformer(this._inputCoordinateSystem, this._WGS84, [nodeBox.min.x, nodeBox.min.y]);
+		let maxCoord = this.coordinateTransformer(this._inputCoordinateSystem, this._WGS84, [nodeBox.max.x, nodeBox.max.y]);
 		return {
 			min: minCoord,
 			max: maxCoord
@@ -55,11 +54,11 @@ Potree.MapTilesConverter = class MapTilesConverter {
 	// Finds a zoom level where minWeb and maxWeb is inside the same tile
 	getZoomLevel(minWeb, maxWeb) {
 		let currentZoomLevel = 18;
-		while(true) {
+		while (true) {
 			let minLong = this.long2tile(minWeb[0], currentZoomLevel);
 			let maxLong = this.long2tile(maxWeb[0], currentZoomLevel);
-			let minLat =  this.lat2tile(minWeb[1], currentZoomLevel);
-			let maxLat =  this.lat2tile(maxWeb[1], currentZoomLevel);
+			let minLat = this.lat2tile(minWeb[1], currentZoomLevel);
+			let maxLat = this.lat2tile(maxWeb[1], currentZoomLevel);
 
 			if (minLong === maxLong && minLat === maxLat) {
 				return currentZoomLevel;
@@ -70,10 +69,25 @@ Potree.MapTilesConverter = class MapTilesConverter {
 	}
 
 	long2tile(lon, zoom) { return (Math.floor((lon + 180) / 360 * Math.pow(2, zoom))); }
-	lat2tile(lat, zoom) { return (Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom))); }
+	lat2tile(lat, zoom) {
+		if (lat > 0) {
+			lat = Math.min(lat, 85.0511);
+		} else {
+			lat = Math.max(lat, -85.0511);
+		}
+		return (Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom)));
+	}
 
 	long2tileDouble(lon, zoom) { return (((lon + 180) / 360 * Math.pow(2, zoom))); }
-	lat2tileDouble(lat, zoom) { return (((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom))); }
+	lat2tileDouble(lat, zoom) {
+		//Lat has to be s
+		if (lat > 0) {
+			lat = Math.min(lat, 85.0511);
+		} else {
+			lat = Math.max(lat, -85.0511);
+		}
+		return (((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom)));
+	}
 
 
 }
