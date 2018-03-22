@@ -151,15 +151,17 @@ Potree.MapTextureManager = class MapTextureManager {
 	tilePromiseFor(tile) {
 		return new Promise((resolve, reject) => {
 			fetch(Potree.MapTextureManagerSettings.tileServer + tile.zoom + "/" + tile.X + "/" + tile.Y + ".png",
-				{ mode: 'cors', cache: true })
-				.then(response =>
-					response.arrayBuffer()
-				).then(buffer => {
+				{ mode: 'cors', cache: 'force-cache' })
+				.then(response => response.blob() )
+				.then(blob => {
+					let imageURL = URL.createObjectURL(blob);
 					let image = new Image(256, 256);
-					let bytes = new Uint8Array(buffer);
-					image.src = "data:image/png;base64," + encode(bytes);
-					let data = { tile: tile, image: image }
-					resolve(data);
+					image.onload = () => {
+						let data = { tile: tile, image: image }
+						resolve(data);
+						URL.revokeObjectURL(imageURL);
+					}
+					image.src = imageURL;
 				});
 		});
 	}
