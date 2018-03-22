@@ -45,7 +45,7 @@ Potree.TileTextureAtlas = class TileTextureAtlas {
 		});
 
 		if (tileIndex !== -1) {
-			
+			this._tiles[tileIndex].Stamp = new Date();
 			return {
 				numberOfTilesWidth: this._numberOfTilesWidth,
 				numberOfTilesHeight: this._numberOfTilesHeight,
