@@ -38,6 +38,7 @@ Potree.MapTextureManager = class MapTextureManager {
 		this._inputCoordinateSystem = proj4.defs("test");
 		this._WGS84 = proj4.defs("WGS84");
 		this._matrixWorld = matrixWorld;
+		this._tilesRequested = [];
 	}
 
 	getTileDataFor(geometryNode) {
@@ -68,22 +69,35 @@ Potree.MapTextureManager = class MapTextureManager {
 			let minCoord = proj4(this._inputCoordinateSystem, this._WGS84, [nodeBox.min.x, nodeBox.min.y]);
 			let maxCoord = proj4(this._inputCoordinateSystem, this._WGS84, [nodeBox.max.x, nodeBox.max.y]);
 			let tile = this.getTile(minCoord, maxCoord);
-			let hasTile = this._textureAtlas.hasTile(tile);
-			if (!hasTile) {
+			if (!this._textureAtlas.hasTile(tile) && !this._isInRequestedTiles(tile)) {
+				this._tilesRequested.push(tile);
 				promises.push(this.tilePromiseFor(tile));
 			}
 		});
 		promises.forEach(promise => {
 			promise.then(tileImage => {
 				this._textureAtlas.insert(tileImage);
+				this._tilesRequested = this._tilesRequested.filter(tile => {
+					return !this._tilesEqual(tile, tileImage.tile);
+				});
 			});
 		});
 		if (promises.length === 0) {
 			return;
 		}
 		Promise.all(promises).then(() => {
-			callback(this._textureAtlas.texture)
+			callback(this._textureAtlas.texture);
 		});
+	}
+
+	_isInRequestedTiles(tile) {
+		return this._tilesRequested.some(tileRequested => {
+			return this._tilesEqual(tileRequested, tile);
+		});
+	}
+
+	_tilesEqual(tile1, tile2) {
+		return tile1.X === tile2.X && tile1.Y === tile2.Y && tile1.zoom === tile2.zoom;
 	}
 
 	long2tile(lon, zoom) { return (Math.floor((lon + 180) / 360 * Math.pow(2, zoom))); }
