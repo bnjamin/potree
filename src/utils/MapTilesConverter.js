@@ -17,12 +17,12 @@ Potree.MapTilesConverter = class MapTilesConverter {
 		let maxWeb = proj4(this._inputCoordinateSystem, this._WGS84, [nodeBox.max.x, nodeBox.max.y]);
 		let wantedZoomLevel = this.getZoomLevel(minWeb, maxWeb);
 		let yValues = [
-			this.lat2tileDouble(minWeb[1], wantedZoomLevel),
-			this.lat2tileDouble(maxWeb[1], wantedZoomLevel)
+			this.lat2tileDouble(data.min[1], wantedZoomLevel),
+			this.lat2tileDouble(data.max[1], wantedZoomLevel)
 		];
 		let xValues = [
-			this.long2tileDouble(minWeb[0], wantedZoomLevel),
-			this.long2tileDouble(maxWeb[0], wantedZoomLevel)
+			this.long2tileDouble(data.min[0], wantedZoomLevel),
+			this.long2tileDouble(data.max[0], wantedZoomLevel)
 		];
 		let minY = Math.min(...yValues);
 		let minX = Math.min(...xValues);
@@ -43,8 +43,8 @@ Potree.MapTilesConverter = class MapTilesConverter {
 	}
 
 	convertCoordinates(nodeBox) {
-		let minCoord = this.coordinateTransformer(this._inputCoordinateSystem, this._WGS84, [nodeBox.min.x, nodeBox.min.y]);
-		let maxCoord = this.coordinateTransformer(this._inputCoordinateSystem, this._WGS84, [nodeBox.max.x, nodeBox.max.y]);
+		let minCoord = proj4(this.projection, "WGS84", [nodeBox.min.x, nodeBox.min.y]);
+		let maxCoord = proj4(this.projection, "WGS84", [nodeBox.max.x, nodeBox.max.y]);
 		return {
 			min: minCoord,
 			max: maxCoord
