@@ -14,21 +14,6 @@ Potree.TileTextureAtlas = class TileTextureAtlas {
 		return this._tiles.length();
 	}
 
-	getImages(X_min, Y_min, X_max, Y_max, zoomLevel) {
-		return this._tiles.filter(e => e.zoomLevel === zoomLevel && (e.X === X_max || e.X === X_min && e.Y === Y_max || e.Y === Y_min));
-	}
-
-	getImageBasedOnTile(tile) {
-		let image = this._tiles.filter(e => e.tile.zoomLevel === tile.zoomLevel && e.tile.X === tile.X && e.tile.Y === tile.Y)[0];
-		if (image) {
-			let index = this._tiles.indexOf(image);
-			this._tiles[index].Stamp = new Date();
-			return image
-		} else {
-			return undefined;
-		}
-	}
-
 	get texture() {
 		let texture = new THREE.CanvasTexture(this._canvas);
 		texture.minFilter = THREE.LinearFilter;
@@ -70,16 +55,6 @@ Potree.TileTextureAtlas = class TileTextureAtlas {
 		}
 	}
 
-	removeImage(X, Y, zoomLevel) {
-		if (this._tiles.length() > 0) {
-			let index = this._tiles.findIndex()(o => o.tile.X === X && o.tile.Y === Y && o.tile.zoomLevel === zoomLevel);
-			if (index !== -1) {
-				this._tiles[index] = undefined;
-			}
-		} else {
-			return;
-		}
-	}
 
 	removeIndex(index) {
 		if (this._tiles.length > 0 && index !== -1) {
