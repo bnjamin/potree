@@ -138,7 +138,7 @@ let workers = {
 		"src/utils/toInterleavedBufferAttribute.js",
 	],
 	"ServiceWorker": [
-		"src/workers/serviceworker.js"
+		"src/workers/CacheWorker.js"
 	]
 };
 
