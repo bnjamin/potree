@@ -1,5 +1,3 @@
-
-
 Potree.TileTextureAtlas = class TileTextureAtlas {
 	constructor(tileHeight, tileWidth) {
 		this._canvas = document.getElementById("texture");
@@ -21,21 +19,21 @@ Potree.TileTextureAtlas = class TileTextureAtlas {
 		return texture;
 	}
 
-	getTileDataFor(minX, minY, maxX, maxY, wantedZoomLevel) {
-		let tileIndex = this._tiles.findIndex(tile => {
+	getTileDataFor(minX, minY, maxX, maxY, forZoomLevel) {
+		let tile = this._tiles.find(tile => {
 			return tile &&
-			tile.tile.X === Math.floor(minX) &&
-			tile.tile.Y === Math.floor(minY) &&
-			tile.tile.zoom === wantedZoomLevel;
+				tile.X === Math.floor(minX) &&
+				tile.Y === Math.floor(minY) &&
+				tile.zoom === forZoomLevel;
 		});
 
-		if (tileIndex !== -1) {
-			this._tiles[tileIndex].Stamp = new Date();
+		if (tile) {
+			tile.stamp = new Date();
 			return {
 				numberOfTilesWidth: this._numberOfTilesWidth,
 				numberOfTilesHeight: this._numberOfTilesHeight,
-				x: tileIndex % this._numberOfTilesWidth,
-				y: this._numberOfTilesHeight - 1 - Math.floor(tileIndex / this._numberOfTilesWidth),
+				x: tile.index % this._numberOfTilesWidth,
+				y: this._numberOfTilesHeight - 1 - Math.floor(tile.index / this._numberOfTilesWidth),
 				xOffset: minX - Math.floor(minX),
 				yOffset: ((Math.floor(maxY) + 1) - maxY),
 				width: maxX - minX,
@@ -45,16 +43,18 @@ Potree.TileTextureAtlas = class TileTextureAtlas {
 	}
 
 	hasTile(tile) {
-		let imageTile = this._tiles.filter(e => e.tile.zoomLevel === tile.zoomLevel && e.tile.X === tile.X && e.tile.Y === tile.Y)[0];
-		if (imageTile) {
-			let index = this._tiles.indexOf(imageTile);
-			this._tiles[index].Stamp = new Date();
+		let foundTile = this._tiles.find(_tile => {
+			return _tile &&_tile.zoom === tile.zoom &&
+				_tile.X === tile.X && _tile.Y === tile.Y;
+
+		});
+		if (foundTile) {
+			foundTile.stamp = new Date();
 			return true;
 		} else {
 			return false;
 		}
 	}
-
 
 	removeIndex(index) {
 		if (this._tiles.length > 0 && index !== -1) {
@@ -65,8 +65,8 @@ Potree.TileTextureAtlas = class TileTextureAtlas {
 	}
 
 	removeOldestTile() {
-		let oldestDate = Math.min(...this._tiles.map(d => d.Stamp));
-		let tile = this._tiles.find(o => o.Stamp.getTime() === oldestDate)
+		let oldestDate = Math.min(...this._tiles.map(d => d.stamp));
+		let tile = this._tiles.find(o => o.stamp.getTime() === oldestDate)
 		let index = this._tiles.indexOf(tile);
 		this.removeIndex(index);
 		return index;
@@ -89,16 +89,16 @@ Potree.TileTextureAtlas = class TileTextureAtlas {
 
 	insert(tileImage) {
 		let index = this.findNextIndex();
-		tileImage.Stamp = new Date();
-		this._tiles[index] = tileImage;
+		let image = tileImage.image;
+		let tile = Object.assign({
+			index: index,
+			stamp: new Date()
+		}, tileImage.tile);
+		this._tiles[index] = tile;
 		let ctx = this._canvas.getContext("2d");
-		let xOffset = (index % this._numberOfTilesWidth) * tileImage.image.width;
-		let yOffset = Math.floor(index / this._numberOfTilesWidth) * tileImage.image.height;
+		let xOffset = (index % this._numberOfTilesWidth) * image.width;
+		let yOffset = Math.floor(index / this._numberOfTilesWidth) * image.height;
 
-		ctx.drawImage(tileImage.image, xOffset, yOffset);
+		ctx.drawImage(image, xOffset, yOffset);
 	}
-
-
-
-
 }
