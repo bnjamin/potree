@@ -78,7 +78,7 @@ uniform vec3 bbMax;
 uniform float uLevel;
 uniform float uVNStart;
 uniform bool uIsLeafNode;
-uniform tileAtlasData uTileAtlasData;
+uniform tileAtlasData uTileAtlasData[128]; // TODO: Set the number in an define.
 
 uniform vec3 uColor;
 uniform float uOpacity;
@@ -427,10 +427,12 @@ vec3 getElevation(){
 }
 
 vec3 getMapColor(){
+	tileAtlasData atlasData = uTileAtlasData[0];
+
 	float nodeSize = uOctreeSize / pow(2.0, uLevel);
 	vec2 xyInNode = position.xy / nodeSize;
-	float x = (float(uTileAtlasData.x) + uTileAtlasData.xOffset + (xyInNode.x * uTileAtlasData.width) ) / float(uTileAtlasData.numberOfTilesWidth);
-	float y = (float(uTileAtlasData.y) + uTileAtlasData.yOffset + (xyInNode.y * uTileAtlasData.height) ) / float(uTileAtlasData.numberOfTilesHeight);
+	float x = (float(atlasData.x) + atlasData.xOffset + (xyInNode.x * atlasData.width) ) / float(atlasData.numberOfTilesWidth);
+	float y = (float(atlasData.y) + atlasData.yOffset + (xyInNode.y * atlasData.height) ) / float(atlasData.numberOfTilesHeight);
 	vec2 uv = vec2(x, y);
 
 	return texture2D(texture, uv).rgb;

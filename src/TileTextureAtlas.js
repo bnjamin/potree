@@ -20,15 +20,28 @@ Potree.TileTextureAtlas = class TileTextureAtlas {
 	}
 
 	getTileDataFor(minX, minY, maxX, maxY, forZoomLevel) {
-		let tile = this._tiles.find(tile => {
-			return tile &&
-				tile.X === Math.floor(minX) &&
-				tile.Y === Math.floor(minY) &&
-				tile.zoom === forZoomLevel;
+		let coveringTiles = this._usedTiles().filter(tile => {
+			let tileZoom = tile.zoom;
+			var newValue = function (oldZoom, newZoom, oldValue) {
+				return oldValue * Math.pow(2, newZoom-oldZoom);
+			};
+			let newMinX = newValue(forZoomLevel, tileZoom, minX);
+			let newMaxX = newValue(forZoomLevel, tileZoom, maxX);
+			let newMinY = newValue(forZoomLevel, tileZoom, minY);
+			let newMaxY = newValue(forZoomLevel, tileZoom, maxY);
+
+			if (newMinX >= tile.X + 1) return false; // the tile is to the left of the node
+			if (newMaxX <= tile.X) return false; // the tile is to the right of the node
+			if (newMinY >= tile.Y + 1) return false; // the tile is to the top of the node
+			if (newMaxY <= tile.Y) return false; // the tile is to the bottom of the node
+
+			return true; // The tile must overlap some or all of the node.
 		});
 
-		if (tile) {
-			tile.stamp = new Date();
+		coveringTiles.forEach(tile => tile.stamp = new Date());
+		coveringTiles.sort((tileA, tileB) => tileB.zoom - tileA.zoom);
+
+		return coveringTiles.map(tile => {
 			return {
 				numberOfTilesWidth: this._numberOfTilesWidth,
 				numberOfTilesHeight: this._numberOfTilesHeight,
@@ -37,14 +50,18 @@ Potree.TileTextureAtlas = class TileTextureAtlas {
 				xOffset: minX - Math.floor(minX),
 				yOffset: ((Math.floor(maxY) + 1) - maxY),
 				width: maxX - minX,
-				height: maxY - minY
+				height: maxY - minY,
+				minU: 0,
+				maxU: 1,
+				minV: 0,
+				maxV: 1
 			}
-		}
+		});
 	}
 
 	hasTile(tile) {
-		let foundTile = this._tiles.find(_tile => {
-			return _tile &&_tile.zoom === tile.zoom &&
+		let foundTile = this._usedTiles().find(_tile => {
+			return _tile.zoom === tile.zoom &&
 				_tile.X === tile.X && _tile.Y === tile.Y;
 
 		});
@@ -100,5 +117,9 @@ Potree.TileTextureAtlas = class TileTextureAtlas {
 		let yOffset = Math.floor(index / this._numberOfTilesWidth) * image.height;
 
 		ctx.drawImage(image, xOffset, yOffset);
+	}
+
+  _usedTiles() {
+		return this._tiles.filter(tile => tile !== null && tile !== undefined);
 	}
 }

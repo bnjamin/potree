@@ -710,18 +710,18 @@ Potree.Renderer = class Renderer {
 
 			shader.setUniform1f("uPCIndex", i);
 			// uBBSize
-			let tileData = octree.mapTextureManager.getTileDataFor(node.geometryNode)
-			if (tileData) {
-				shader.setUniform1i("uTileAtlasData.numberOfTilesHeight", tileData.numberOfTilesHeight);
-				shader.setUniform1i("uTileAtlasData.numberOfTilesWidth", tileData.numberOfTilesWidth);
-				shader.setUniform1f("uTileAtlasData.height", tileData.height);
-				shader.setUniform1f("uTileAtlasData.width", tileData.width);
-				shader.setUniform1i("uTileAtlasData.x", tileData.x);
-				shader.setUniform1i("uTileAtlasData.y", tileData.y);
-				shader.setUniform1f("uTileAtlasData.xOffset", tileData.xOffset);
-				shader.setUniform1f("uTileAtlasData.yOffset", tileData.yOffset);
+			let tileDatas = octree.mapTextureManager.getTileDataFor(node.geometryNode)
+			for (var tileIndex = 0; tileIndex < tileDatas.length; tileIndex++) {
+				let tileData = tileDatas[tileIndex];
+				shader.setUniform1i(`uTileAtlasData[${tileIndex}].numberOfTilesHeight`, tileData.numberOfTilesHeight);
+				shader.setUniform1i(`uTileAtlasData[${tileIndex}].numberOfTilesWidth`, tileData.numberOfTilesWidth);
+				shader.setUniform1f(`uTileAtlasData[${tileIndex}].height`, tileData.height);
+				shader.setUniform1f(`uTileAtlasData[${tileIndex}].width`, tileData.width);
+				shader.setUniform1i(`uTileAtlasData[${tileIndex}].x`, tileData.x);
+				shader.setUniform1i(`uTileAtlasData[${tileIndex}].y`, tileData.y);
+				shader.setUniform1f(`uTileAtlasData[${tileIndex}].xOffset`, tileData.xOffset);
+				shader.setUniform1f(`uTileAtlasData[${tileIndex}].yOffset`, tileData.yOffset);
 			}
-
 
 			if (shadowMaps.length > 0) {
 
