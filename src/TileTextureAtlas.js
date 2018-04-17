@@ -1,8 +1,109 @@
+Potree.Tile = class Tile {
+	constructor(index, x, y, zoom) {
+		this.index = index;
+		this.x = x;
+		this.y = y;
+		this.zoom = zoom;
+		this.stamp = new Date();
+	}
+
+	renewStamp() {
+		this.stamp = new Date();
+	}
+
+	minX(forZoomLevel) {
+		if (!forZoomLevel) return this.x;
+		else return this._convertValue(forZoomLevel, this.x);
+	}
+
+	maxX(forZoomLevel) {
+		if (!forZoomLevel) return this.x + 1;
+		else return this._convertValue(forZoomLevel, this.x + 1);
+	}
+
+	minY(forZoomLevel) {
+		if (!forZoomLevel) return this.y;
+		else return this._convertValue(forZoomLevel, this.y);
+	}
+	maxY(forZoomLevel) {
+		if (!forZoomLevel) return this.y + 1;
+		else return this._convertValue(forZoomLevel, this.y + 1);
+	}
+
+	_convertValue(toZoomLevel, oldValue) {
+		return oldValue * Math.pow(2, toZoomLevel - this.zoom);
+	}
+
+	overlapsNode(node) {
+		if (this.maxX(node.zoom) <= node.minX) return false; // the tile is to the left of the node
+		if (this.minX(node.zoom) >= node.maxX) return false; // the tile is to the right of the node
+		if (this.maxY(node.zoom) <= node.minY) return false; // the tile is to the top of the node
+		if (this.minY(node.zoom) >= node.maxY) return false; // the tile is to the bottom of the node
+
+		return true; // The tile overlaps some or all of the node.
+	}
+
+	minUFor(node) {
+		let minX = this.minX(node.zoom);
+		let maxX = this.maxX(node.zoom);
+		if (minX <= node.minX) return 0;
+		else return this._normalizeValue(node.minX, node.maxX, minX);
+	}
+
+	maxUFor(node) {
+		let minX = this.minX(node.zoom);
+		let maxX = this.maxX(node.zoom);
+		if (maxX >= node.maxX) return 1;
+		else return this._normalizeValue(node.minX, node.maxX, maxX);
+	}
+
+	minVFor(node) {
+		let minY = this.minY(node.zoom);
+		let maxY = this.maxY(node.zoom);
+		if (maxY >= node.maxY) return 0;
+		else return 1 - this._normalizeValue(node.minY, node.maxY, maxY);
+	}
+
+	maxVFor(node) {
+		let minY = this.minY(node.zoom);
+		let maxY = this.maxY(node.zoom);
+		if (minY <= node.minY) return 1;
+		else return 1 - this._normalizeValue(node.minY, node.maxY, minY);
+	}
+
+	xOffset(x, node) {
+		let minX = this.minX(node.zoom);
+		let maxX = this.maxX(node.zoom);
+
+		return x + this._normalizeValue(minX, maxX, node.minX);
+	}
+
+	yOffset(y, node) {
+		let minY = this.minY(node.zoom);
+		let maxY = this.maxY(node.zoom);
+
+		return y + 1 - this._normalizeValue(minY, maxY, node.maxY);
+	}
+
+	nodeWidth(node) {
+		return (node.maxX - node.minX) / (this.maxX(node.zoom) - this.minX(node.zoom));
+	}
+
+	nodeHeight(node) {
+		return (node.maxY - node.minY) / (this.maxY(node.zoom) - this.minY(node.zoom));
+	}
+
+	// Returns a number between 0 and 1
+	_normalizeValue(fromValue, toValue, actualValue) {
+		return (actualValue - fromValue) / (toValue - fromValue);
+	}
+}
+
 Potree.TileTextureAtlas = class TileTextureAtlas {
 	constructor(tileHeight, tileWidth) {
 		this._canvas = document.getElementById("texture");
-		this._numberOfTilesHeight = Math.pow(2, 2);
-		this._numberOfTilesWidth = Math.pow(2, 5);
+		this._numberOfTilesHeight = Math.pow(2, 4);
+		this._numberOfTilesWidth = Math.pow(2, 2);
 		this._canvas.height = tileHeight * this._numberOfTilesHeight;
 		this._canvas.width = tileWidth * this._numberOfTilesWidth;
 		this._tiles = Array(this._numberOfTilesHeight * this._numberOfTilesWidth);
@@ -19,58 +120,35 @@ Potree.TileTextureAtlas = class TileTextureAtlas {
 		return texture;
 	}
 
-	getTileDataFor(minX, minY, maxX, maxY, forZoomLevel) {
-		let coveringTiles = this._usedTiles().filter(tile => {
-			let tileZoom = tile.zoom;
-			var newValue = function (oldZoom, newZoom, oldValue) {
-				return oldValue * Math.pow(2, newZoom-oldZoom);
-			};
-			let newMinX = newValue(forZoomLevel, tileZoom, minX);
-			let newMaxX = newValue(forZoomLevel, tileZoom, maxX);
-			let newMinY = newValue(forZoomLevel, tileZoom, minY);
-			let newMaxY = newValue(forZoomLevel, tileZoom, maxY);
+	getTileDataFor(node) {
+		let coveringTiles = this._usedTiles().filter(tile => tile.overlapsNode(node));
 
-			if (newMinX >= tile.X + 1) return false; // the tile is to the left of the node
-			if (newMaxX <= tile.X) return false; // the tile is to the right of the node
-			if (newMinY >= tile.Y + 1) return false; // the tile is to the top of the node
-			if (newMaxY <= tile.Y) return false; // the tile is to the bottom of the node
-
-			return true; // The tile must overlap some or all of the node.
-		});
-
-		coveringTiles.forEach(tile => tile.stamp = new Date());
+		coveringTiles.forEach(tile => tile.renewStamp());
 		coveringTiles.sort((tileA, tileB) => tileB.zoom - tileA.zoom);
 
 		return coveringTiles.map(tile => {
+			let x = tile.index % this._numberOfTilesWidth;
+			let y = this._numberOfTilesHeight - Math.floor(tile.index / this._numberOfTilesWidth) - 1;
 			return {
 				numberOfTilesWidth: this._numberOfTilesWidth,
 				numberOfTilesHeight: this._numberOfTilesHeight,
-				x: tile.index % this._numberOfTilesWidth,
-				y: this._numberOfTilesHeight - 1 - Math.floor(tile.index / this._numberOfTilesWidth),
-				xOffset: minX - Math.floor(minX),
-				yOffset: ((Math.floor(maxY) + 1) - maxY),
-				width: maxX - minX,
-				height: maxY - minY,
-				minU: 0,
-				maxU: 1,
-				minV: 0,
-				maxV: 1
+				xOffset: tile.xOffset(x, node),
+				yOffset: tile.yOffset(y, node),
+				width: tile.nodeWidth(node),
+				height: tile.nodeHeight(node),
+				minU: tile.minUFor(node),
+				maxU: tile.maxUFor(node),
+				minV: tile.minVFor(node),
+				maxV: tile.maxVFor(node)
 			}
 		});
 	}
 
 	hasTile(tile) {
-		let foundTile = this._usedTiles().find(_tile => {
+		return this._usedTiles().some(_tile => {
 			return _tile.zoom === tile.zoom &&
-				_tile.X === tile.X && _tile.Y === tile.Y;
-
+				_tile.x === tile.X && _tile.y === tile.Y;
 		});
-		if (foundTile) {
-			foundTile.stamp = new Date();
-			return true;
-		} else {
-			return false;
-		}
 	}
 
 	removeIndex(index) {
@@ -107,10 +185,12 @@ Potree.TileTextureAtlas = class TileTextureAtlas {
 	insert(tileImage) {
 		let index = this.findNextIndex();
 		let image = tileImage.image;
-		let tile = Object.assign({
-			index: index,
-			stamp: new Date()
-		}, tileImage.tile);
+		let tile = new Potree.Tile(
+			index,
+			tileImage.tile.X,
+			tileImage.tile.Y,
+			tileImage.tile.zoom
+		);
 		this._tiles[index] = tile;
 		let ctx = this._canvas.getContext("2d");
 		let xOffset = (index % this._numberOfTilesWidth) * image.width;

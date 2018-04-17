@@ -7,12 +7,15 @@ struct tileAtlasData {
 	int numberOfTilesWidth;
 	float height;
 	float width;
-	int x;
-	int y;
 	float xOffset;
 	float yOffset;
+	float minU;
+	float maxU;
+	float minV;
+	float maxV;
 };
 
+#define numOfTiles 64
 #define max_clip_polygons 8
 #define PI 3.141592653589793
 
@@ -78,7 +81,7 @@ uniform vec3 bbMax;
 uniform float uLevel;
 uniform float uVNStart;
 uniform bool uIsLeafNode;
-uniform tileAtlasData uTileAtlasData[128]; // TODO: Set the number in an define.
+uniform tileAtlasData uTileAtlasData[numOfTiles]; // TODO: Set the number in an define.
 
 uniform vec3 uColor;
 uniform float uOpacity;
@@ -427,15 +430,23 @@ vec3 getElevation(){
 }
 
 vec3 getMapColor(){
-	tileAtlasData atlasData = uTileAtlasData[0];
-
 	float nodeSize = uOctreeSize / pow(2.0, uLevel);
 	vec2 xyInNode = position.xy / nodeSize;
-	float x = (float(atlasData.x) + atlasData.xOffset + (xyInNode.x * atlasData.width) ) / float(atlasData.numberOfTilesWidth);
-	float y = (float(atlasData.y) + atlasData.yOffset + (xyInNode.y * atlasData.height) ) / float(atlasData.numberOfTilesHeight);
-	vec2 uv = vec2(x, y);
+	float x = xyInNode.x;
+	float y = xyInNode.y;
 
-	return texture2D(texture, uv).rgb;
+	for(int i = 0; i < numOfTiles; i++) {
+	  tileAtlasData atlasData = uTileAtlasData[i];
+		bool xyInTile = x >= atlasData.minU && x <= atlasData.maxU && y >= atlasData.minV && y <= atlasData.maxV;
+		if (xyInTile) {
+			float u = (atlasData.xOffset + (x * atlasData.width) ) / float(atlasData.numberOfTilesWidth);
+			float v = (atlasData.yOffset + (y * atlasData.height) ) / float(atlasData.numberOfTilesHeight);
+			vec2 uv = vec2(u, v);
+			return texture2D(texture, uv).rgb;
+		}
+	}
+
+	return vec3(0, 0, 0);
 }
 
 vec4 getClassification(){

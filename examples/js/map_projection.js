@@ -13,7 +13,7 @@
 
 	window.viewer = new Potree.Viewer(document.getElementById("potree_render_area"));
 	Potree.MapTextureManagerSettings.tileServer = "http://localhost:32775/styles/klokantech-basic/";
-	viewer.setEDLEnabled(true);
+	//viewer.setEDLEnabled(true);
 	viewer.setFOV(60);
 	viewer.setPointBudget(1*1000*1000);
 	viewer.loadSettingsFromURL();

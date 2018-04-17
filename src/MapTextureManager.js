@@ -2,34 +2,6 @@ Potree.MapTextureManagerSettings = {
 	tileServer: null
 };
 
-// public method for encoding an Uint8Array to base64
-function encode(input) {
-	var keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
-	var output = "";
-	var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
-	var i = 0;
-
-	while (i < input.length) {
-		chr1 = input[i++];
-		chr2 = i < input.length ? input[i++] : Number.NaN; // Not sure if the index 
-		chr3 = i < input.length ? input[i++] : Number.NaN; // checks are needed here
-
-		enc1 = chr1 >> 2;
-		enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
-		enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
-		enc4 = chr3 & 63;
-
-		if (isNaN(chr2)) {
-			enc3 = enc4 = 64;
-		} else if (isNaN(chr3)) {
-			enc4 = 64;
-		}
-		output += keyStr.charAt(enc1) + keyStr.charAt(enc2) +
-			keyStr.charAt(enc3) + keyStr.charAt(enc4);
-	}
-	return output;
-}
-
 Potree.MapTextureManager = class MapTextureManager {
 	constructor(projection, matrixWorld) {
 		this.projection = projection;
@@ -45,21 +17,29 @@ Potree.MapTextureManager = class MapTextureManager {
 		let nodeBox = Potree.utils.computeTransformedBoundingBox(geometryNode.boundingBox, this._matrixWorld);
 		let minWeb = proj4(this._inputCoordinateSystem, this._WGS84, [nodeBox.min.x, nodeBox.min.y]);
 		let maxWeb = proj4(this._inputCoordinateSystem, this._WGS84, [nodeBox.max.x, nodeBox.max.y]);
-		let wantedZoomLevel = this.getZoomLevel(minWeb, maxWeb);
+		let zoom = this.getZoomLevel(minWeb, maxWeb);
 		let yValues = [
-			this.lat2tileDouble(minWeb[1], wantedZoomLevel),
-			this.lat2tileDouble(maxWeb[1], wantedZoomLevel)
+			this.lat2tileDouble(minWeb[1], zoom),
+			this.lat2tileDouble(maxWeb[1], zoom)
 		];
 		let xValues = [
-			this.long2tileDouble(minWeb[0], wantedZoomLevel),
-			this.long2tileDouble(maxWeb[0], wantedZoomLevel)
+			this.long2tileDouble(minWeb[0], zoom),
+			this.long2tileDouble(maxWeb[0], zoom)
 		];
 		let minY = Math.min(...yValues);
 		let minX = Math.min(...xValues);
 		let maxY = Math.max(...yValues);
 		let maxX = Math.max(...xValues);
 
-		return this._textureAtlas.getTileDataFor(minX, minY, maxX, maxY, wantedZoomLevel);
+		let node = {
+			minX: minX,
+			minY: minY,
+			maxX: maxX,
+			maxY: maxY,
+			zoom: zoom
+		}
+
+		return this._textureAtlas.getTileDataFor(node);
 	}
 
 	updateTextureFor(visibleNodes, callback) {
@@ -68,11 +48,13 @@ Potree.MapTextureManager = class MapTextureManager {
 			let nodeBox = Potree.utils.computeTransformedBoundingBox(node.geometryNode.boundingBox, this._matrixWorld);
 			let minCoord = proj4(this._inputCoordinateSystem, this._WGS84, [nodeBox.min.x, nodeBox.min.y]);
 			let maxCoord = proj4(this._inputCoordinateSystem, this._WGS84, [nodeBox.max.x, nodeBox.max.y]);
-			let tile = this.getTile(minCoord, maxCoord);
-			if (!this._textureAtlas.hasTile(tile) && !this._isInRequestedTiles(tile)) {
-				this._tilesRequested.push(tile);
-				promises.push(this.tilePromiseFor(tile));
-			}
+			let tiles = this.getTiles(minCoord, maxCoord);
+			tiles.forEach(tile => {
+				if (!this._textureAtlas.hasTile(tile) && !this._isInRequestedTiles(tile)) {
+					this._tilesRequested.push(tile);
+					promises.push(this.tilePromiseFor(tile));
+				}
+			});
 		});
 		promises.forEach(promise => {
 			promise.then(tileImage => {
@@ -106,9 +88,9 @@ Potree.MapTextureManager = class MapTextureManager {
 	long2tileDouble(lon, zoom) { return (((lon + 180) / 360 * Math.pow(2, zoom))); }
 	lat2tileDouble(lat, zoom) { return (((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom))); }
 
-	getTile(minCoord, maxCoord, zoom = 18) {
-		let minZoom = 1;
-		let minNumberOfTiles = 1;
+	getTiles(minCoord, maxCoord, zoom = 19) {
+		let maxZoom = 19;
+		let maxNumberOfTiles = 1;
 		let minX = this.long2tile(minCoord[0], zoom);
 		let minY = this.lat2tile(minCoord[1], zoom);
 		let maxX = this.long2tile(maxCoord[0], zoom);
@@ -123,10 +105,10 @@ Potree.MapTextureManager = class MapTextureManager {
 		}
 
 		// We want at least minNumberOfTiles tiles per pointcloud node
-		if (tiles.length === minNumberOfTiles || zoom === minZoom) {
-			return tiles[0];
+		if (tiles.length === maxNumberOfTiles || zoom === 1) {
+			return tiles;
 		} else {
-			return this.getTile(minCoord, maxCoord, zoom - 1);
+			return this.getTiles(minCoord, maxCoord, zoom - 1);
 		}
 	}
 
