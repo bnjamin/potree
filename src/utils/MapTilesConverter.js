@@ -52,7 +52,7 @@ Potree.MapTilesConverter = class MapTilesConverter {
 
 	// Finds a zoom level where minWeb and maxWeb is inside the same tile
 	getZoomLevel(minWeb, maxWeb) {
-		let currentZoomLevel = 18;
+		let currentZoomLevel = 19;
 		while (true) {
 			let minLong = this.long2tile(minWeb[0], currentZoomLevel);
 			let maxLong = this.long2tile(maxWeb[0], currentZoomLevel);

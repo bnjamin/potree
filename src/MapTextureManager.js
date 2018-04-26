@@ -165,11 +165,9 @@ Potree.MapTextureManager = class MapTextureManager {
 	_calculateNumberOfPixelsForNode(node, camera, camObjPos, domHeight){
         let sphere = node.getBoundingSphere();
         let center = sphere.center;
-        
         let dx = camObjPos.x - center.x;
         let dy = camObjPos.y - center.y;
-        let dz = camObjPos.z - center.z;
-                
+        let dz = camObjPos.z - center.z;                
         let dd = dx * dx + dy * dy + dz * dz;
         let distance = Math.sqrt(dd);
         let radius = sphere.radius;
@@ -177,9 +175,9 @@ Potree.MapTextureManager = class MapTextureManager {
         let fov = (camera.fov * Math.PI) / 180;
         let slope = Math.tan(fov / 2);
         let projFactor = (0.5 * domHeight) / (slope * distance);
-        let screenPixelRadius = 2 * radius * projFactor;
+        let screenPixels = 2 * radius * projFactor;
 
-        return screenPixelRadius;               
+        return screenPixels;               
     }
 
 

@@ -63,6 +63,19 @@ describe('MapTileConverter', function () {
 
 	})
 
+	describe('toRad', function () {
+		it('should return pi then 180 deg is inut', () => {
+			let rad = mapTileConverter._toRad(180);
+			rad.should.equal(Math.PI);
+		});
+
+		it('should return 2 times pi then 360 deg is inut', () => {
+			let rad = mapTileConverter._toRad(360);
+			rad.should.equal(2 * Math.PI);
+		});
+	})
+
+
 	describe('convertCoordinates', () => {
 		it('should return nodeBox coordinates', () => {
 			let min = {
@@ -146,12 +159,11 @@ describe('MapTileConverter', function () {
 			zoomLevel.should.equal(0);
 		});
 
-		it('should return 18 if the input coordinates are the same', () => {
+		it('should return 19 (max) if the input coordinates are the same', () => {
 			let minWeb = [-157, 70];
 			let maxWeb = minWeb;
 			let zoomLevel = mapTileConverter.getZoomLevel(minWeb, maxWeb);
-			zoomLevel.should.equal(18);
+			zoomLevel.should.equal(19);
 		})
-
 	})
 })
