@@ -258,11 +258,10 @@ Potree.PointCloudOctree = class extends Potree.PointCloudTree {
 		// TODO: Is this the correct place to do this? Maybe it should occour in PotreeRenderer#renderOctree
 		if (this.mapTextureManager) {
 			this.mapTextureManager.updateTextureFor(visibleNodes, camera, renderer.domElement.clientHeight, (mapTexture) => {
-				if(material.texture){
+				if (material.texture) {
 					material.texture.dispose();
 				}
 				material.texture = mapTexture;
-				
 			});
 		}
 	}

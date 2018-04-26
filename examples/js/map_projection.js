@@ -12,7 +12,7 @@
 	}
 
 	window.viewer = new Potree.Viewer(document.getElementById("potree_render_area"));
-	Potree.MapTextureManagerSettings.tileServer = "http://localhost:32775/styles/klokantech-basic/";
+	Potree.MapTextureManagerSettings.tileServer = "http://tileserver.bnjamin.com/styles/osm-bright/";
 	//viewer.setEDLEnabled(true);
 	viewer.setFOV(60);
 	viewer.setPointBudget(1*1000*1000);

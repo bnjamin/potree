@@ -193,7 +193,7 @@ Potree.MapTextureManager = class MapTextureManager {
 		let maxY = this.lat2tile(maxCoord[1], zoom);
 		let arrayX = [minX, maxX].sort();
 		let arrayY = [minY, maxY].sort();
-		let numberOfTiles = (arrayX[1] - arrayX[0]) * (arrayY[1] - arrayY[0])
+		let numberOfTiles = (arrayX[1] - arrayX[0]) * (arrayY[1] - arrayY[0]);
 
 		// We want at least minNumberOfTiles tiles per pointcloud node
 		if (numberOfTiles === maxNumberOfTiles || zoom === 1) {

@@ -102,7 +102,7 @@ Potree.Tile = class Tile {
 Potree.TileTextureAtlas = class TileTextureAtlas {
 	constructor(tileHeight, tileWidth) {
 		this._canvas = document.getElementById("texture");
-		this._numberOfTilesHeight = Math.pow(2, 4);
+		this._numberOfTilesHeight = Math.pow(2, 5);
 		this._numberOfTilesWidth = Math.pow(2, 2);
 		this._canvas.height = tileHeight * this._numberOfTilesHeight;
 		this._canvas.width = tileWidth * this._numberOfTilesWidth;
