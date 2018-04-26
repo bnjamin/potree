@@ -1,11 +1,14 @@
 Potree.MapTextureManagerSettings = {
-	tileServer: null
+	tileServer: null,
+	maxZoomlevel: null
 };
 
+
+
 Potree.MapTextureManager = class MapTextureManager {
-	constructor(projection, matrixWorld) {
-		this._mapTilesConverter = new Potree.MapTilesConverter(projection, matrixWorld);
-		this._textureAtlas = new Potree.TileTextureAtlas(256, 256);
+	constructor(matrixWorld, mapTilesConverter, tileTextureAtlas) {
+		this._mapTilesConverter = mapTilesConverter;
+		this._textureAtlas = tileTextureAtlas;
 		this._matrixWorld = matrixWorld;
 		this._tilesRequested = [];
 		this._lowerLimit = 100;
@@ -19,13 +22,35 @@ Potree.MapTextureManager = class MapTextureManager {
     _toRad(Value) {
         /** Converts numeric degrees to radians */
         return Value * Math.PI / 180;
+	}
+
+	_calculateCamObjPos(camera){
+        let frustum = new THREE.Frustum();
+        let viewI = camera.matrixWorldInverse;
+        let world = this._matrixWorld;
+        
+        // use close near plane for frustum intersection
+        let frustumCam = camera.clone();
+        frustumCam.near = Math.min(camera.near, 0.1);
+        frustumCam.updateProjectionMatrix();
+        let proj = camera.projectionMatrix;
+
+        let fm = new THREE.Matrix4().multiply(proj).multiply(viewI).multiply(world);
+        frustum.setFromMatrix(fm);
+
+        // camera position in object space
+        let view = camera.matrixWorld;
+        let worldI = new THREE.Matrix4().getInverse(world);
+        let camMatrixObject = new THREE.Matrix4().multiply(worldI).multiply(view);
+        return new THREE.Vector3().setFromMatrixPosition(camMatrixObject);
     }
 
 	_guessZoomlevel(minCoord, maxCoord){
         let dLat = Math.abs(maxCoord[1] - minCoord[0]);
         let dLon = Math.abs(maxCoord[0] - minCoord[0]);
         let pixelsInTile = 256;
-        let distance = this._calcDistanceBetween(minCoord, maxCoord);
+
+        let distance = this._mapTilesConverter.CalcDistanceBetween(minCoord, maxCoord);
         let meterPrPixel = distance / (Math.sqrt(Math.pow(pixelsInTile, 2) + (dLat / dLon * Math.pow(pixelsInTile, 2))));
 
         let zoom = 0;
@@ -40,65 +65,23 @@ Potree.MapTextureManager = class MapTextureManager {
         return zoom;
 	}
 
-	//https://www.movable-type.co.uk/scripts/latlong.html
-	_calcDistanceBetween(minCoord, maxCoord) {
-        //Radius of the earth in:  1.609344 miles,  6371 km  | var R = (6371 / 1.609344);
-        let R = 3958.7558657440545; // Radius of earth in Miles 
-		let lat1 = minCoord[1];
-		let lat2 = maxCoord[1];
-		let lon1 = minCoord[0];
-		let lon2 = maxCoord[0];
-        let dLat =this._toRad(lat2 - lat1);
-        let dLon = this._toRad(lon2 - lon1);
-        let a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(this._toRad(lat1)) * Math.cos(this._toRad(lat2)) *
-            Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        let distance = 1000 * R * c;
-        return distance;
-    }
-
-
-	calculateCamObjPos(camera){
-		let frustum = new THREE.Frustum();
-		let viewI = camera.matrixWorldInverse;
-		let world = this._matrixWorld;
-		
-		// use close near plane for frustum intersection
-		let frustumCam = camera.clone();
-		frustumCam.near = Math.min(camera.near, 0.1);
-		frustumCam.updateProjectionMatrix();
-		let proj = camera.projectionMatrix;
-
-		let fm = new THREE.Matrix4().multiply(proj).multiply(viewI).multiply(world);
-		frustum.setFromMatrix(fm);
-
-		// camera position in object space
-		let view = camera.matrixWorld;
-		let worldI = new THREE.Matrix4().getInverse(world);
-		let camMatrixObject = new THREE.Matrix4().multiply(worldI).multiply(view);
-		return new THREE.Vector3().setFromMatrixPosition(camMatrixObject);
-	}
-
-	updateTextureFor(visibleNodes, camera, domHeight, callback) {
+	
+    updateTextureFor(visibleNodes, camera, domHeight, callback) {
 		let promises = [];
-		let maxZoomlevel = 18;
-		let camObjPos = this.calculateCamObjPos(camera);
+        let camObjPos = this._calculateCamObjPos(camera);
 
 		visibleNodes.forEach(node => {
 			let pixelsInNodeRadius = this._calculateNumberOfPixelsForNode (node, camera, camObjPos, domHeight);
-			if(pixelsInNodeRadius < this._lowerLimit || pixelsInNodeRadius > domHeight){
-				return;
-			}
-
+            if(pixelsInNodeRadius < this._lowerLimit || pixelsInNodeRadius > domHeight){
+                return;
+            }
 			let nodeBox = Potree.utils.computeTransformedBoundingBox(node.geometryNode.boundingBox, this._matrixWorld);
 			let boundingBoxCoord = this._mapTilesConverter.convertCoordinates(nodeBox);
-
-			let zoomlevelGuess = this._guessZoomlevel(boundingBoxCoord.min, boundingBoxCoord.max);
-			if(maxZoomlevel <= zoomlevelGuess){
-				zoomlevelGuess = maxZoomlevel;
-			}
-			let tiles = this.getTiles(boundingBoxCoord.min, boundingBoxCoord.max, zoomlevelGuess);
+            let zoomlevelGuess = this._guessZoomlevel(boundingBoxCoord.min, boundingBoxCoord.max);
+            if(this.maxZoomlevel <= zoomlevelGuess){
+                zoomlevelGuess = this.maxZoomlevel;
+            }
+            let tiles = this.getTiles(boundingBoxCoord.min, boundingBoxCoord.max, zoomlevelGuess);
 			tiles.forEach(tile => {
 				if (!this._textureAtlas.hasTile(tile) && !this._isInRequestedTiles(tile)) {
 					this._tilesRequested.push(tile);
@@ -156,6 +139,7 @@ Potree.MapTextureManager = class MapTextureManager {
 
 
 	getTiles(minCoord, maxCoord, zoom, maxNumberOfTiles = 1) {
+
 		let minX = this._mapTilesConverter.long2tile(minCoord[0], zoom);
 		let minY = this._mapTilesConverter.lat2tile(minCoord[1], zoom);
 		let maxX = this._mapTilesConverter.long2tile(maxCoord[0], zoom);
@@ -177,6 +161,27 @@ Potree.MapTextureManager = class MapTextureManager {
 			return this.getTiles(minCoord, maxCoord, zoom - 1);
 		}
 	}
+
+	_calculateNumberOfPixelsForNode(node, camera, camObjPos, domHeight){
+        let sphere = node.getBoundingSphere();
+        let center = sphere.center;
+        
+        let dx = camObjPos.x - center.x;
+        let dy = camObjPos.y - center.y;
+        let dz = camObjPos.z - center.z;
+                
+        let dd = dx * dx + dy * dy + dz * dz;
+        let distance = Math.sqrt(dd);
+        let radius = sphere.radius;
+                
+        let fov = (camera.fov * Math.PI) / 180;
+        let slope = Math.tan(fov / 2);
+        let projFactor = (0.5 * domHeight) / (slope * distance);
+        let screenPixelRadius = 2 * radius * projFactor;
+
+        return screenPixelRadius;               
+    }
+
 
 	tilePromiseFor(tile) {
 		return new Promise((resolve, reject) => {

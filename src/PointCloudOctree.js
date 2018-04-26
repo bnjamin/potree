@@ -268,9 +268,12 @@ Potree.PointCloudOctree = class extends Potree.PointCloudTree {
 
 	set usesMapTexture(value) {
     if (value) {
+			let tileAtlasTexture = new Potree.TileTextureAtlas(256, 256, window.document);
+			let mapTilesConverter = new Potree.MapTilesConverter(this.projection, this.matrixWorld);
 			this.mapTextureManager = new Potree.MapTextureManager(
-				this.projection,
-				this.matrixWorld
+				this.matrixWorld,
+				mapTilesConverter,
+				tileAtlasTexture
 			);
 		} else {
 			this.mapTextureManager = null;

@@ -12,10 +12,9 @@ Potree.MapTilesConverter = class MapTilesConverter {
 		if (this._cachedTileData.has(geometryNode.id)) {
 			return this._cachedTileData.get(geometryNode.id);
 		}
-		let nodeBox = Potree.utils.computeTransformedBoundingBox(geometryNode.boundingBox, this._matrixWorld);		
-		let minWeb = proj4(this._inputCoordinateSystem, this._WGS84, [nodeBox.min.x, nodeBox.min.y]);
-		let maxWeb = proj4(this._inputCoordinateSystem, this._WGS84, [nodeBox.max.x, nodeBox.max.y]);
-		let wantedZoomLevel = this.getZoomLevel(minWeb, maxWeb);
+		let nodeBox = Potree.utils.computeTransformedBoundingBox(geometryNode.boundingBox, this._matrixWorld);
+		let data = this.convertCoordinates(nodeBox);		
+		let wantedZoomLevel = this.getZoomLevel(data.min, data.max);
 		let yValues = [
 			this.lat2tileDouble(data.min[1], wantedZoomLevel),
 			this.lat2tileDouble(data.max[1], wantedZoomLevel)
@@ -88,6 +87,30 @@ Potree.MapTilesConverter = class MapTilesConverter {
 		}
 		return (((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom)));
 	}
+
+	//https://www.movable-type.co.uk/scripts/latlong.html
+    CalcDistanceBetween(minCoord, maxCoord) {
+        //Radius of the earth in:  1.609344 miles,  6371 km  | var R = (6371 / 1.609344);
+        let R = 3958.7558657440545; // Radius of earth in Miles 
+        let lat1 = minCoord[1];
+        let lat2 = maxCoord[1];
+        let lon1 = minCoord[0];
+        let lon2 = maxCoord[0];
+        let dLat =this._toRad(lat2 - lat1);
+        let dLon = this._toRad(lon2 - lon1);
+        let a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(this._toRad(lat1)) * Math.cos(this._toRad(lat2)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        let distance = 1000 * R * c;
+        return distance;
+    }
+
+	_toRad(Value) {
+        /** Converts numeric degrees to radians */
+        return Value * Math.PI / 180;
+    }
+
 
 
 }
