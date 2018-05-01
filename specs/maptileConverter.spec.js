@@ -1,11 +1,28 @@
 let chai = require("chai");
 // Tell chai that we'll be using the "should" style assertions.
 chai.should();
-Potree = {};
+Potree = {
+	utils: {}
+};
+Potree.utils.computeTransformedBoundingBox = function(){
+	let boundingBox = arguments[0];
+	return {
+		min:{
+			x: boundingBox.min.x,
+			y: boundingBox.min.y
+		},
+		max:{
+			x: boundingBox.max.x,
+			y: boundingBox.max.y
+		}
+	}
+};
 proj4 = function () {
 	let coordinates = arguments[2];
 	return coordinates;
 }
+
+proj4.defs = function(){};
 let MapTilesConverter = require('../src/utils/MapTilesConverter');
 
 
@@ -13,7 +30,8 @@ describe('MapTileConverter', function () {
 	let mapTileConverter;
 	beforeEach(() => {
 		let projection = "Irrelevant";
-		mapTileConverter = new Potree.MapTilesConverter(projection);
+		let matrixWorld = "Irrelevant";
+		mapTileConverter = new Potree.MapTilesConverter(projection, matrixWorld);
 	});
 
 	describe('lat2tile', function () {
@@ -113,6 +131,10 @@ describe('MapTileConverter', function () {
 				min: min,
 				max: max
 			};
+			let geometryNode = {
+				id: 4,
+				boundingBox: nodeBox
+			}
 
 			let tile = {
 				minX: 0.06388888888888888,
@@ -121,7 +143,7 @@ describe('MapTileConverter', function () {
 				maxY: 0.3785791577410809,
 				zoomLevel: 0
 			}
-			let tileData = mapTileConverter.CalcTileData(nodeBox);
+			let tileData = mapTileConverter.CalcTileData(geometryNode);
 			tileData.should.deep.equal(tile);
 		})
 
@@ -138,6 +160,11 @@ describe('MapTileConverter', function () {
 				min: min,
 				max: max
 			};
+			
+			let geometryNode = {
+				id: 4,
+				boundingBox: nodeBox
+			}
 
 			let tile = {
 				minX: 33,
@@ -146,7 +173,7 @@ describe('MapTileConverter', function () {
 				maxY: 4.500000000000114,
 				zoomLevel: 8
 			}
-			let tileData = mapTileConverter.CalcTileData(nodeBox);
+			let tileData = mapTileConverter.CalcTileData(geometryNode);
 			tileData.should.deep.equal(tile);
 		})
 	})
