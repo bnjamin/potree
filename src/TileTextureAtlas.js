@@ -120,8 +120,11 @@ Potree.TileTextureAtlas = class TileTextureAtlas {
 		return texture;
 	}
 
-	getTileDataFor(node) {
-		let coveringTiles = this._usedTiles().filter(tile => tile.overlapsNode(node));
+	getTileDataFor(node, avgDistance) {
+		let maxZoom = this._maxZoomFromAvgDistance(avgDistance);
+		let coveringTiles = this._usedTiles()
+			.filter(tile => tile.zoom <= maxZoom)
+			.filter(tile => tile.overlapsNode(node));
 
 		coveringTiles.forEach(tile => tile.renewStamp());
 		coveringTiles.sort((tileA, tileB) => tileB.zoom - tileA.zoom);
@@ -201,5 +204,9 @@ Potree.TileTextureAtlas = class TileTextureAtlas {
 
   _usedTiles() {
 		return this._tiles.filter(tile => tile !== null && tile !== undefined);
+	}
+
+	_maxZoomFromAvgDistance(avgDistance) {
+		return 12;
 	}
 }

@@ -602,8 +602,14 @@ Potree.Renderer = class Renderer {
 		let mat4holder = new Float32Array(16);
 
 		let mapTextureManager = params.mapTextureManager;
-
-		let i = 0;
+		let cameraPosition = mapTextureManager._calculateCamObjPos(camera);
+		let distances = nodes.map(node => {
+			let center = node.geometryNode.getBoundingSphere().center;
+			return center.distanceTo(cameraPosition);
+		});
+		let boundsSpan = octree.visibleBounds.min.distanceTo(octree.visibleBounds.max);
+		console.log("Visible bounds span", boundsSpan)
+		let avgDistance = distances.reduce((accu, value) => accu + value, 0) / distances.length;
 		for (let node of nodes) {
 
 			if(Potree.debug.allowedNodes !== undefined){
@@ -711,7 +717,7 @@ Potree.Renderer = class Renderer {
 			shader.setUniform1f("uPCIndex", i);
 			// uBBSize
 			if (octree.mapTextureManager) {
-				let tileDatas = octree.mapTextureManager.getTileDataFor(node.geometryNode)
+				let tileDatas = octree.mapTextureManager.getTileDataFor(node.geometryNode, avgDistance)
 				if (tileDatas.length > 0) {
 					for (var tileIndex = 0; tileIndex < tileDatas.length; tileIndex++) {
 						let tileData = tileDatas[tileIndex];

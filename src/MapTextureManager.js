@@ -11,12 +11,12 @@ Potree.MapTextureManager = class MapTextureManager {
 		this._textureAtlas = tileTextureAtlas;
 		this._matrixWorld = matrixWorld;
 		this._tilesRequested = [];
-		this._lowerLimit = 100;
+		this._lowerLimit = 250;
 	}
 
-	getTileDataFor(geometryNode) {
+	getTileDataFor(geometryNode, avgDistance) {
 		let node = this._mapTilesConverter.CalcTileData(geometryNode);
-		return this._textureAtlas.getTileDataFor(node);
+		return this._textureAtlas.getTileDataFor(node, avgDistance);
 	}
 
     _toRad(Value) {
