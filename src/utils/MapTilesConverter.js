@@ -33,7 +33,7 @@ Potree.MapTilesConverter = class MapTilesConverter {
 			minX: minX,
 			maxY: maxY,
 			maxX: maxX,
-			zoomLevel: wantedZoomLevel
+			zoom: wantedZoomLevel
 		};
 
 		this._cachedTileData.set(geometryNode.id, tileData);
