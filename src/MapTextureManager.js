@@ -12,32 +12,40 @@ Potree.MapTextureManager = class MapTextureManager {
 		this._matrixWorld = matrixWorld;
 		this._tilesRequested = [];
 		this._lowerLimit = 100;
+		this._cachedNodes = new Map();
 	}
 
 	getTileDataFor(geometryNode) {
-		let nodeBox = Potree.utils.computeTransformedBoundingBox(geometryNode.boundingBox, this._matrixWorld);
-		let minWeb = proj4(this._inputCoordinateSystem, this._WGS84, [nodeBox.min.x, nodeBox.min.y]);
-		let maxWeb = proj4(this._inputCoordinateSystem, this._WGS84, [nodeBox.max.x, nodeBox.max.y]);
-		let zoom = this.getZoomLevel(minWeb, maxWeb);
-		let yValues = [
-			this.lat2tileDouble(minWeb[1], zoom),
-			this.lat2tileDouble(maxWeb[1], zoom)
-		];
-		let xValues = [
-			this.long2tileDouble(minWeb[0], zoom),
-			this.long2tileDouble(maxWeb[0], zoom)
-		];
-		let minY = Math.min(...yValues);
-		let minX = Math.min(...xValues);
-		let maxY = Math.max(...yValues);
-		let maxX = Math.max(...xValues);
+		let node = undefined;
+		if (this._cachedNodes.has(geometryNode.id)) {
+			node = this._cachedNodes.get(geometryNode.id);
+		} else {
+			let nodeBox = Potree.utils.computeTransformedBoundingBox(geometryNode.boundingBox, this._matrixWorld);
+			let minWeb = proj4(this._inputCoordinateSystem, this._WGS84, [nodeBox.min.x, nodeBox.min.y]);
+			let maxWeb = proj4(this._inputCoordinateSystem, this._WGS84, [nodeBox.max.x, nodeBox.max.y]);
+			let zoom = this.getZoomLevel(minWeb, maxWeb);
+			let yValues = [
+				this.lat2tileDouble(minWeb[1], zoom),
+				this.lat2tileDouble(maxWeb[1], zoom)
+			];
+			let xValues = [
+				this.long2tileDouble(minWeb[0], zoom),
+				this.long2tileDouble(maxWeb[0], zoom)
+			];
+			let minY = Math.min(...yValues);
+			let minX = Math.min(...xValues);
+			let maxY = Math.max(...yValues);
+			let maxX = Math.max(...xValues);
 
-		let node = {
-			minX: minX,
-			minY: minY,
-			maxX: maxX,
-			maxY: maxY,
-			zoom: zoom
+			node = {
+				minX: minX,
+				minY: minY,
+				maxX: maxX,
+				maxY: maxY,
+				zoom: zoom
+			}
+
+			this._cachedNodes.set(geometryNode.id, node);
 		}
 
 		return this._textureAtlas.getTileDataFor(node);
@@ -109,7 +117,7 @@ Potree.MapTextureManager = class MapTextureManager {
 
 	updateTextureFor(visibleNodes, camera, domHeight, callback) {
 		let promises = [];
-		let maxZoomlevel = 19;
+		let maxZoomlevel = 18;
 		let camObjPos = this.calculateCamObjPos(camera);
 
 		visibleNodes.forEach(node => {
@@ -186,14 +194,14 @@ Potree.MapTextureManager = class MapTextureManager {
 	long2tileDouble(lon, zoom) { return (((lon + 180) / 360 * Math.pow(2, zoom))); }
 	lat2tileDouble(lat, zoom) { return (((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom))); }
 
-	getTiles(minCoord, maxCoord, zoom = 18, maxNumberOfTiles = 1) {
+	getTiles(minCoord, maxCoord, zoom, maxNumberOfTiles = 1) {
 		let minX = this.long2tile(minCoord[0], zoom);
 		let minY = this.lat2tile(minCoord[1], zoom);
 		let maxX = this.long2tile(maxCoord[0], zoom);
 		let maxY = this.lat2tile(maxCoord[1], zoom);
 		let arrayX = [minX, maxX].sort();
 		let arrayY = [minY, maxY].sort();
-		let numberOfTiles = (arrayX[1] - arrayX[0]) * (arrayY[1] - arrayY[0]);
+		let numberOfTiles = (arrayX[1] - arrayX[0] + 1) * (arrayY[1] - arrayY[0] + 1);
 
 		// We want at least minNumberOfTiles tiles per pointcloud node
 		if (numberOfTiles === maxNumberOfTiles || zoom === 1) {
