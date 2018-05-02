@@ -602,12 +602,22 @@ Potree.Renderer = class Renderer {
 		let mat4holder = new Float32Array(16);
 
 		let mapTextureManager = params.mapTextureManager;
-
 		let i = 0;
-		for (let node of nodes) {
+		let cameraPosition = mapTextureManager._calculateCamObjPos(camera);
 
-			if(Potree.debug.allowedNodes !== undefined){
-				if(!Potree.debug.allowedNodes.includes(node.name)){
+		let screenWidth = target ? target.width : material.screenWidth;
+
+		if (nodes.length > 0) {
+			var distance = Math.abs(cameraPosition.z - nodes[0].geometryNode.mean.z);
+			var diagonalLengthOfVisibleBounds = 2 * distance * Math.tan(camera.getEffectiveFOV() / 2 * Math.PI / 180);
+		}
+
+		// let screenHeight = target ? target.height : material.screenHeight;
+		let resolution = diagonalLengthOfVisibleBounds / screenWidth;
+
+		for (let node of nodes) {
+			if (Potree.debug.allowedNodes !== undefined) {
+				if (!Potree.debug.allowedNodes.includes(node.name)) {
 					continue;
 				}
 			}
@@ -711,7 +721,7 @@ Potree.Renderer = class Renderer {
 			shader.setUniform1f("uPCIndex", i);
 			// uBBSize
 			if (octree.mapTextureManager) {
-				let tileDatas = octree.mapTextureManager.getTileDataFor(node.geometryNode)
+				let tileDatas = octree.mapTextureManager.getTileDataFor(node.geometryNode, resolution)
 				if (tileDatas.length > 0) {
 					for (var tileIndex = 0; tileIndex < tileDatas.length; tileIndex++) {
 						let tileData = tileDatas[tileIndex];

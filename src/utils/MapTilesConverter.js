@@ -67,6 +67,11 @@ Potree.MapTilesConverter = class MapTilesConverter {
 		}
 	}
 
+	 tile2lat(y,z) {
+		let n=Math.PI-2*Math.PI*y/Math.pow(2,z);
+		return (180/Math.PI*Math.atan(0.5*(Math.exp(n)-Math.exp(-n))));
+	}
+
 	long2tile(lon, zoom) { return (Math.floor((lon + 180) / 360 * Math.pow(2, zoom))); }
 	lat2tile(lat, zoom) {
 		if (lat > 0) {

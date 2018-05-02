@@ -186,6 +186,13 @@ describe('MapTileConverter', function () {
 			zoomLevel.should.equal(0);
 		});
 
+		it('should return 0 if input coordinates are in Alaska and Australia', () => {
+			let minWeb = [-157, 70];
+			let maxWeb = [147, -40];
+			let zoomLevel = mapTileConverter.getZoomLevel(minWeb, maxWeb);
+			zoomLevel.should.equal(0);
+		});
+
 		it('should return 19 (max) if the input coordinates are the same', () => {
 			let minWeb = [-157, 70];
 			let maxWeb = minWeb;

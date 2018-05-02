@@ -14,31 +14,20 @@ Potree.MapTextureManager = class MapTextureManager {
 		this._lowerLimit = 100;
 	}
 
-	getTileDataFor(geometryNode) {
+	getTileDataFor(geometryNode, resolution) {
 		let node = this._mapTilesConverter.CalcTileData(geometryNode);
-		return this._textureAtlas.getTileDataFor(node);
+		let lat = this._mapTilesConverter.tile2lat(node.minY, node.zoom);
+		let maxZoom = this._calcMaxZoom(resolution, lat);	
+		maxZoom = Math.min(maxZoom, Potree.MapTextureManagerSettings.maxZoomlevel);
+		return this._textureAtlas.getTileDataFor(node, maxZoom);
 	}
 
-	_toRad(Value) {
-		/** Converts numeric degrees to radians */
-		return Value * Math.PI / 180;
+	_calcMaxZoom(resolution, lat) {
+		return Math.floor(Math.log2(Math.abs(Math.cos(lat))*156543.03/resolution)) - 1;
 	}
 
 	_calculateCamObjPos(camera) {
-		let frustum = new THREE.Frustum();
-		let viewI = camera.matrixWorldInverse;
 		let world = this._matrixWorld;
-
-		// use close near plane for frustum intersection
-		let frustumCam = camera.clone();
-		frustumCam.near = Math.min(camera.near, 0.1);
-		frustumCam.updateProjectionMatrix();
-		let proj = camera.projectionMatrix;
-
-		let fm = new THREE.Matrix4().multiply(proj).multiply(viewI).multiply(world);
-		frustum.setFromMatrix(fm);
-
-		// camera position in object space
 		let view = camera.matrixWorld;
 		let worldI = new THREE.Matrix4().getInverse(world);
 		let camMatrixObject = new THREE.Matrix4().multiply(worldI).multiply(view);
@@ -67,7 +56,7 @@ Potree.MapTextureManager = class MapTextureManager {
 
 	_calculateAngleToSurface(camera) {
 		let vector = camera.getWorldDirection();
-    	let angle = Math.abs(Math.atan2(vector.x,vector.z) * 180/Math.PI)-90;
+		let angle = Math.abs(Math.atan2(vector.x, vector.z) * 180 / Math.PI) - 90;
 		return angle;
 	}
 
@@ -84,12 +73,12 @@ Potree.MapTextureManager = class MapTextureManager {
 			}
 			let nodeBox = Potree.utils.computeTransformedBoundingBox(node.geometryNode.boundingBox, this._matrixWorld);
 			let boundingBoxCoord = this._mapTilesConverter.convertCoordinates(nodeBox);
-			if(angleToSurface > 75){
+			if (angleToSurface > 75) {
+
 			}
 			let zoomlevelGuess = this._guessZoomlevel(boundingBoxCoord.min, boundingBoxCoord.max);
-			if (this.maxZoomlevel <= zoomlevelGuess) {
-				zoomlevelGuess = this.maxZoomlevel;
-			}
+			zoomlevelGuess = Math.min(zoomlevelGuess, Potree.MapTextureManagerSettings.maxZoomlevel);
+
 			let tiles = this.getTiles(boundingBoxCoord.min, boundingBoxCoord.max, zoomlevelGuess);
 			tiles.forEach(tile => {
 				if (!this._textureAtlas.hasTile(tile) && !this._isInRequestedTiles(tile)) {
