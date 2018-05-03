@@ -17,13 +17,56 @@ Potree.MapTextureManager = class MapTextureManager {
 	getTileDataFor(geometryNode, resolution) {
 		let node = this._mapTilesConverter.CalcTileData(geometryNode);
 		let lat = this._mapTilesConverter.tile2lat(node.minY, node.zoom);
-		let maxZoom = this._calcMaxZoom(resolution, lat);	
+		let maxZoom = this._calcMaxZoom(resolution, lat);
 		maxZoom = Math.min(maxZoom, Potree.MapTextureManagerSettings.maxZoomlevel);
-		return this._textureAtlas.getTileDataFor(node, maxZoom);
+		let tiles = this._textureAtlas.getTileDataFor(node, maxZoom);
+		// if(tiles.length > 0)
+		// tiles = this._calculateOverlap(tiles);
+		return tiles;
 	}
 
+	_calculateOverlap(coveringTiles) {
+		let minU, minV = 1;
+		let maxU, maxV = 0;
+		let i = 0;
+		let area = 0;
+		while (minU !== 0 && minV !== 0 && maxU !== 1 && maxV !== 1) {
+			let tiles = coveringTiles;
+			tiles.length = i;
+			tiles = tiles.filter(tile => this._overlapsTile(coveringTiles[i], tile));
+			let areaCurrentTile = (coveringTiles[i].maxU - coveringTiles[i].minU) * (coveringTiles[i].maxV - coveringTiles[i].minV)
+			let overlappedArea = this._calcOverlappedArea(coveringTiles[i], tiles);
+			area = area + (areaCurrentTile - overlappedArea);
+			minU = Math.min(coveringTiles[i].minU, minU);
+			minV = Math.min(coveringTiles[i].minV, minV);
+			maxU = Math.max(coveringTiles[i].maxU, maxU);
+			maxV = Math.max(coveringTiles[i].maxV, maxV);
+			i++;
+			if (i >= tiles.length)
+				break;
+		}
+		tiles.length = i;
+		return tiles;
+	}
+
+	_calcOverlappedArea(currentTile, tiles) {
+		tiles.forEach(tile => {
+
+		});
+	}
+
+	_overlapsTile(currentTile, tile) {
+		if (currentTile.maxU <= tile.minU) return false; // the tile is to the left of the node
+		if (currentTile.maxV <= node.minV) return false; // the tile is to the right of the node
+		if (currentTile.minV >= node.maxV) return false; // the tile is to the top of the node
+		if (currentTile.minU >= node.maxU) return false; // the tile is to the bottom of the node
+
+		return true; // The tile overlaps some or all of the node.
+	}
+
+
 	_calcMaxZoom(resolution, lat) {
-		return Math.floor(Math.log2(Math.abs(Math.cos(lat))*156543.03/resolution)) - 1;
+		return Math.floor(Math.log2(Math.abs(Math.cos(lat)) * 156543.03 / resolution)) - 1;
 	}
 
 	_calculateCamObjPos(camera) {
@@ -38,17 +81,17 @@ Potree.MapTextureManager = class MapTextureManager {
 		let dLat = Math.abs(maxCoord[1] - minCoord[0]);
 		let dLon = Math.abs(maxCoord[0] - minCoord[0]);
 		let pixelsInTile = 256;
-
 		let distance = this._mapTilesConverter.CalcDistanceBetween(minCoord, maxCoord);
-		let meterPrPixel = distance / (Math.sqrt(Math.pow(pixelsInTile, 2) + (dLat / dLon * Math.pow(pixelsInTile, 2))));
+		let resolution = distance / (Math.sqrt(Math.pow(pixelsInTile, 2) + (dLat / dLon * Math.pow(pixelsInTile, 2))));
+		let zoom = this._calcMaxZoom(resolution, maxCoord[1]);
 
-		let zoom = 0;
-		let pixelLength = 156543.03;
-		while (pixelLength / 2 > meterPrPixel) {
-			pixelLength = Math.abs(156543.03 * Math.cos(maxCoord[1])) / Math.pow(2, zoom);
-			zoom++;
-		}
-		zoom--;
+		// let zoom = 0;
+		// let pixelLength = 156543.03;
+		// while (pixelLength / 2 > meterPrPixel) {
+		// 	pixelLength = Math.abs(156543.03 * Math.cos(maxCoord[1])) / Math.pow(2, zoom);
+		// 	zoom++;
+		// }
+		// zoom--;
 
 
 		return zoom;
@@ -64,7 +107,7 @@ Potree.MapTextureManager = class MapTextureManager {
 	updateTextureFor(visibleNodes, camera, domHeight, callback) {
 		let promises = [];
 		let camObjPos = this._calculateCamObjPos(camera);
-		let angleToSurface = this._calculateAngleToSurface(camera);
+		// let angleToSurface = this._calculateAngleToSurface(camera);
 
 		visibleNodes.forEach(node => {
 			let pixelsInNodeRadius = this._calculateNumberOfPixelsForNode(node, camera, camObjPos, domHeight);
@@ -73,9 +116,9 @@ Potree.MapTextureManager = class MapTextureManager {
 			}
 			let nodeBox = Potree.utils.computeTransformedBoundingBox(node.geometryNode.boundingBox, this._matrixWorld);
 			let boundingBoxCoord = this._mapTilesConverter.convertCoordinates(nodeBox);
-			if (angleToSurface > 75) {
+			// if (angleToSurface > 75) {
 
-			}
+			// }
 			let zoomlevelGuess = this._guessZoomlevel(boundingBoxCoord.min, boundingBoxCoord.max);
 			zoomlevelGuess = Math.min(zoomlevelGuess, Potree.MapTextureManagerSettings.maxZoomlevel);
 
@@ -87,7 +130,7 @@ Potree.MapTextureManager = class MapTextureManager {
 				}
 			});
 		});
-
+		promises.reverse()
 		promises.forEach(promise => {
 			promise.then(tileImage => {
 				this._textureAtlas.insert(tileImage);

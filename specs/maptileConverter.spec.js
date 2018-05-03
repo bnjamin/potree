@@ -81,6 +81,8 @@ describe('MapTileConverter', function () {
 
 	})
 
+
+
 	describe('toRad', function () {
 		it('should return pi then 180 deg is inut', () => {
 			let rad = mapTileConverter._toRad(180);
@@ -141,7 +143,7 @@ describe('MapTileConverter', function () {
 				minY: 0.22380009854461985,
 				maxX: 0.9083333333333333,
 				maxY: 0.3785791577410809,
-				zoomLevel: 0
+				zoom: 0
 			}
 			let tileData = mapTileConverter.CalcTileData(geometryNode);
 			tileData.should.deep.equal(tile);
@@ -171,12 +173,32 @@ describe('MapTileConverter', function () {
 				minY: 4,
 				maxX: 33.5,
 				maxY: 4.500000000000114,
-				zoomLevel: 8
+				zoom: 8
 			}
 			let tileData = mapTileConverter.CalcTileData(geometryNode);
 			tileData.should.deep.equal(tile);
 		})
 	})
+
+	describe('CalcDistanceBetween', function () {
+		it('should return 6575m', () => {
+			let minCoord = [-133.59375,84.54136107313408];
+			let maxCoord = [-132.890625, 84.47406458459159];
+			let distance = Math.floor(mapTileConverter.CalcDistanceBetween(minCoord, maxCoord));
+			distance.should.equal(6575);
+			
+		})
+
+		it('should return 165.665km between Aarhus and Copenhagen', () => {
+			let minCoord = [56.144695, 10.154284];
+			let maxCoord = [55.666243, 12.505653];
+			let distance = Math.floor(mapTileConverter.CalcDistanceBetween(minCoord, maxCoord));
+			distance.should.equal(165665);
+		})
+
+		
+	})
+
 
 	describe('getZoomlevel', function () {
 		it('should return 0 if input coordinates are in Alaska and Australia', () => {
@@ -186,11 +208,11 @@ describe('MapTileConverter', function () {
 			zoomLevel.should.equal(0);
 		});
 
-		it('should return 0 if input coordinates are in Alaska and Australia', () => {
-			let minWeb = [-157, 70];
-			let maxWeb = [147, -40];
+		it('should return 4 if input coordinates are in Basel and Leipzig', () => {
+			let minWeb = [9.18, 48.19];
+			let maxWeb = [14.32, 51.52];
 			let zoomLevel = mapTileConverter.getZoomLevel(minWeb, maxWeb);
-			zoomLevel.should.equal(0);
+			zoomLevel.should.equal(4);
 		});
 
 		it('should return 19 (max) if the input coordinates are the same', () => {
