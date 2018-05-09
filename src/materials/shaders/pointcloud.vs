@@ -3,20 +3,15 @@ precision highp float;
 precision highp int;
 
 struct tileAtlasData {
-	float height;
-	float width;
-	float xOffset;
-	float yOffset;
-	float minU;
-	float maxU;
-	float minV;
-	float maxV;
+	vec2 dimensions;
+	vec2 xyOffset;
+	vec4 uvBounds;
 };
 
 uniform int numberOfTilesHeight;
 uniform int numberOfTilesWidth;
 
-#define numOfTiles 124
+#define numOfTiles 256
 #define max_clip_polygons 8
 #define PI 3.141592653589793
 
@@ -438,10 +433,10 @@ vec3 getMapColor(){
 
 	for(int i = 0; i < numOfTiles; i++) {
 	  tileAtlasData atlasData = uTileAtlasData[i];
-		bool xyInTile = x >= atlasData.minU && x <= atlasData.maxU && y >= atlasData.minV && y <= atlasData.maxV;
+		bool xyInTile = x >= atlasData.uvBounds[0] && x <= atlasData.uvBounds[1] && y >= atlasData.uvBounds[2] && y <= atlasData.uvBounds[3];
 		if (xyInTile) {
-			float u = (atlasData.xOffset + (x * atlasData.width) ) / float(numberOfTilesWidth);
-			float v = (atlasData.yOffset + (y * atlasData.height) ) / float(numberOfTilesHeight);
+			float u = (atlasData.xyOffset.x + (x * atlasData.dimensions.x) ) / float(numberOfTilesWidth);
+			float v = (atlasData.xyOffset.y + (y * atlasData.dimensions.y) ) / float(numberOfTilesHeight);
 			vec2 uv = vec2(u, v);
 			return texture2D(texture, vec2(u, v)).rgb;
 		}

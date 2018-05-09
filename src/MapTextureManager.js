@@ -12,6 +12,7 @@ Potree.MapTextureManager = class MapTextureManager {
 		this._matrixWorld = matrixWorld;
 		this._tilesRequested = [];
 		this._lowerLimit = 100;
+		this._textureLastUpdatedAt = null;
 	}
 
 	getTileDataFor(geometryNode, resolution) {
@@ -61,10 +62,17 @@ Potree.MapTextureManager = class MapTextureManager {
 	}
 
 
-	updateTextureFor(visibleNodes, camera, domHeight, callback) {
+	updateTextureFor(visibleNodes, camera, domHeight, resolution, callback) {
+		if (visibleNodes.length === 0) return;
+		if (this._shouldThrottleTextureUpdate()) return;
+
+		let rootNode = visibleNodes[0];
+		let node = this._mapTilesConverter.CalcTileData(rootNode.geometryNode);
+		let lat = this._mapTilesConverter.tile2lat(node.minY, node.zoom);
+		let maxZoom = this._calcMaxZoom(resolution, lat);
+
 		let promises = [];
 		let camObjPos = this._calculateCamObjPos(camera);
-		let angleToSurface = this._calculateAngleToSurface(camera);
 
 		visibleNodes.forEach(node => {
 			let pixelsInNodeRadius = this._calculateNumberOfPixelsForNode(node, camera, camObjPos, domHeight);
@@ -73,11 +81,8 @@ Potree.MapTextureManager = class MapTextureManager {
 			}
 			let nodeBox = Potree.utils.computeTransformedBoundingBox(node.geometryNode.boundingBox, this._matrixWorld);
 			let boundingBoxCoord = this._mapTilesConverter.convertCoordinates(nodeBox);
-			if (angleToSurface > 75) {
-
-			}
 			let zoomlevelGuess = this._guessZoomlevel(boundingBoxCoord.min, boundingBoxCoord.max);
-			zoomlevelGuess = Math.min(zoomlevelGuess, Potree.MapTextureManagerSettings.maxZoomlevel);
+			zoomlevelGuess = Math.min(maxZoom, zoomlevelGuess, Potree.MapTextureManagerSettings.maxZoomlevel);
 
 			let tiles = this.getTiles(boundingBoxCoord.min, boundingBoxCoord.max, zoomlevelGuess);
 			tiles.forEach(tile => {
@@ -87,6 +92,7 @@ Potree.MapTextureManager = class MapTextureManager {
 				}
 			});
 		});
+
 
 		promises.forEach(promise => {
 			promise.then(tileImage => {
@@ -205,6 +211,19 @@ Potree.MapTextureManager = class MapTextureManager {
 		});
 	}
 
+  _shouldThrottleTextureUpdate() {
+		if (this._textureLastUpdatedAt === null) {
+			this._textureLastUpdatedAt = new Date();
+			return false;
+		}
 
+		let timeNow = new Date();
+		if (timeNow - this._textureLastUpdatedAt > 1000) {
+			this._textureLastUpdatedAt = timeNow;
+			return false;
+		} else {
+			return true;
+		}
+	}
 
 };

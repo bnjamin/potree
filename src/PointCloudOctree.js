@@ -255,15 +255,6 @@ Potree.PointCloudOctree = class extends Potree.PointCloudTree {
 		material.near = camera.near;
 		material.far = camera.far;
 		material.uniforms.octreeSize.value = this.pcoGeometry.boundingBox.getSize().x;
-		// TODO: Is this the correct place to do this? Maybe it should occour in PotreeRenderer#renderOctree
-		if (this.mapTextureManager) {
-			this.mapTextureManager.updateTextureFor(visibleNodes, camera, renderer.domElement.clientHeight, (mapTexture) => {
-				if (material.texture) {
-					material.texture.dispose();
-				}
-				material.texture = mapTexture;
-			});
-		}
 	}
 
 	set usesMapTexture(value) {
@@ -275,6 +266,7 @@ Potree.PointCloudOctree = class extends Potree.PointCloudTree {
 				mapTilesConverter,
 				tileAtlasTexture
 			);
+			this.material.pointColorType = Potree.PointColorType.MAP;
 		} else {
 			this.mapTextureManager = null;
 		}

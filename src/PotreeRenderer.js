@@ -337,6 +337,17 @@ Potree.Shader = class Shader {
 		gl.uniform3f(location, value[0], value[1], value[2]);
 	}
 
+	setUniform4f(name, value) {
+		const gl = this.gl;
+		const location = this.uniformLocations[name];
+
+		if (location == null) {
+			return;
+		}
+
+		gl.uniform4f(location, value[0], value[1], value[2], value[3]);
+	}
+
 	setUniform(name, value) {
 
 		if (value.constructor === THREE.Matrix4) {
@@ -353,6 +364,8 @@ Potree.Shader = class Shader {
 				this.setUniform2f(name, value);
 			} else if (value.length === 3) {
 				this.setUniform3f(name, value);
+			} else if (value.length === 4) {
+				this.setUniform4f(name, value);
 			}
 
 		} else {
@@ -603,17 +616,25 @@ Potree.Renderer = class Renderer {
 
 		let mapTextureManager = params.mapTextureManager;
 		let i = 0;
-		let cameraPosition = mapTextureManager._calculateCamObjPos(camera);
+		let resolution = 0;
 
-		let screenWidth = target ? target.width : material.screenWidth;
-
-		if (nodes.length > 0) {
-			var distance = Math.abs(cameraPosition.z - nodes[0].geometryNode.mean.z);
-			var diagonalLengthOfVisibleBounds = 2 * distance * Math.tan(camera.getEffectiveFOV() / 2 * Math.PI / 180);
+		if (mapTextureManager) {
+			let screenWidth = target ? target.width : material.screenWidth;
+			let cameraPosition = mapTextureManager._calculateCamObjPos(camera);
+			if (nodes.length > 0) {
+				var distance = Math.abs(cameraPosition.z - nodes[0].geometryNode.mean.z);
+				var diagonalLengthOfVisibleBounds = 2 * distance * Math.tan(camera.getEffectiveFOV() / 2 * Math.PI / 180);
+			}
+			resolution = diagonalLengthOfVisibleBounds / screenWidth;
+			mapTextureManager.updateTextureFor(nodes, camera, screenWidth, resolution, (mapTexture) => {
+				if (material.texture) {
+					material.texture.dispose();
+				}
+				material.texture = mapTexture;
+			});
 		}
 
-		// let screenHeight = target ? target.height : material.screenHeight;
-		let resolution = diagonalLengthOfVisibleBounds / screenWidth;
+
 
 		for (let node of nodes) {
 			if (Potree.debug.allowedNodes !== undefined) {
@@ -723,19 +744,14 @@ Potree.Renderer = class Renderer {
 			if (octree.mapTextureManager) {
 				let tileDatas = octree.mapTextureManager.getTileDataFor(node.geometryNode, resolution)
 				if (tileDatas.length > 0) {
+					shader.setUniform1i(`numberOfTilesHeight`, tileDatas[0].numberOfTilesHeight);
+					shader.setUniform1i(`numberOfTilesWidth`, tileDatas[0].numberOfTilesWidth);
 					for (var tileIndex = 0; tileIndex < tileDatas.length; tileIndex++) {
 						let tileData = tileDatas[tileIndex];
 
-						shader.setUniform1i(`numberOfTilesHeight`, tileData.numberOfTilesHeight);
-						shader.setUniform1i(`numberOfTilesWidth`, tileData.numberOfTilesWidth);
-						shader.setUniform1f(`uTileAtlasData[${tileIndex}].height`, tileData.height);
-						shader.setUniform1f(`uTileAtlasData[${tileIndex}].width`, tileData.width);
-						shader.setUniform1f(`uTileAtlasData[${tileIndex}].xOffset`, tileData.xOffset);
-						shader.setUniform1f(`uTileAtlasData[${tileIndex}].yOffset`, tileData.yOffset);
-						shader.setUniform1f(`uTileAtlasData[${tileIndex}].minU`, tileData.minU);
-						shader.setUniform1f(`uTileAtlasData[${tileIndex}].maxU`, tileData.maxU);
-						shader.setUniform1f(`uTileAtlasData[${tileIndex}].minV`, tileData.minV);
-						shader.setUniform1f(`uTileAtlasData[${tileIndex}].maxV`, tileData.maxV);
+						shader.setUniform2f(`uTileAtlasData[${tileIndex}].dimensions`, [tileData.width, tileData.height]);
+						shader.setUniform2f(`uTileAtlasData[${tileIndex}].xyOffset`, [tileData.xOffset, tileData.yOffset]);
+						shader.setUniform4f(`uTileAtlasData[${tileIndex}].uvBounds`, [tileData.minU, tileData.maxU, tileData.minV, tileData.maxV]);
 					}
 				}
 			}
