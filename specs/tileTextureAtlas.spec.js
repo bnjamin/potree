@@ -15,10 +15,14 @@ describe('TileTextureAtlas', function () {
 	let document;
 	let fakeContext;
 	let tileImage = {
-				image:{
-					width: 256,
-					height: 256
-				},
+		image: {
+			width: 256,
+			height: 256
+		},
+		tile: {
+			X: 10,
+			Y: 10
+		}
 	};
 	beforeEach(() => {
 		document = MockBrowser.createDocument();
@@ -27,7 +31,7 @@ describe('TileTextureAtlas', function () {
 		//From https://stackoverflow.com/questions/30454025/mock-document-getelemetbyid-form-getcontext2d-using-sinon?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
 		//Create your fake canvas and context objects
 		fakeContext = {
-			drawImage: function(){}
+			drawImage: function () { }
 		}; //Replace this with whatever you want your fake context to be
 		let canvas = document.createElement('canvas');
 
@@ -43,26 +47,50 @@ describe('TileTextureAtlas', function () {
 	});
 
 	after(function () {
-        document.getElementById.restore(); // Unwraps the spy
-    });
+		document.getElementById.restore(); // Unwraps the spy
+	});
 
 	describe('hasTile', function () {
-		
+
+	})
+
+	describe('_usedTiles', function () {
+
+		it('should return 0 tiles when nothing is inserted', () => {
+			let tiles = tileTextureAtlas._usedTiles();
+			tiles.should.have.length(0);
+		});
+
+		it('should return 2 tiles when two tile is inserted', () => {
+			tileTextureAtlas.insert(tileImage);
+			tileTextureAtlas.insert(tileImage);
+
+			let tiles = tileTextureAtlas._usedTiles();
+			tiles.should.have.length(2);
+		});
 	})
 
 	describe('getTileDataFor', () => {
-		it('should return 2 when two tile is inserted', () => {
+		it('should return 2 tiles when two tile is inserted', () => {
 
+		});
+	})
+
+	describe('removeOldestTile', () => {
+		it('should remove first inserted tile (index 0)', () => {
+			tileTextureAtlas.insert(tileImage);
+			let index = tileTextureAtlas.removeOldestTile();
+			index.should.equal(0);
 		});
 	})
 
 	describe('findNextIndex', function () {
-		it('should return 0 when nothing is inserted', () => {
+		it('should return index 0 when nothing is inserted', () => {
 			let index = tileTextureAtlas.findNextIndex();
 			index.should.equal(0);
 		});
 
-		it('should return 2 when two tile is inserted', () => {
+		it('should return index 2 when two tile is inserted', () => {
 			tileTextureAtlas.insert(tileImage);
 			tileTextureAtlas.insert(tileImage);
 			let index = tileTextureAtlas.findNextIndex();
