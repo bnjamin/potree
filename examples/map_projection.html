@@ -10,8 +10,8 @@
 	<link rel="stylesheet" type="text/css" href="../build/potree/potree.css">
 	<link rel="stylesheet" type="text/css" href="../libs/jquery-ui/jquery-ui.min.css">
 	<link rel="stylesheet" type="text/css" href="../libs/perfect-scrollbar/css/perfect-scrollbar.css">
-	<link rel="stylesheet" type="text/css" href="../libs/openlayers3/ol.css">
-	<link rel="stylesheet" type="text/css" href="../libs/spectrum/spectrum.css">
+	<!-- <link rel="stylesheet" type="text/css" href="../libs/openlayers3/ol.css">
+	<link rel="stylesheet" type="text/css" href="../libs/spectrum/spectrum.css"> -->
 	<link rel="stylesheet" type="text/css" href="../libs/jstree/themes/mixed/style.css">
 </head>
 
@@ -25,7 +25,7 @@
 	<script src="../libs/tween/tween.min.js"></script>
 	<script src="../libs/d3/d3.js"></script>
 	<script src="../libs/proj4/proj4.js"></script>
-	<script src="../libs/openlayers3/ol.js"></script>
+	<!-- <script src="../libs/openlayers3/ol.js"></script> -->
 	<script src="../libs/i18next/i18next.js"></script>
 	<script src="../libs/jstree/jstree.js"></script>
 	<script src="../build/potree/potree.js"></script>
@@ -40,9 +40,7 @@
 		<div id="potree_render_area"></div>
 	</div>
 
-	<canvas id="texture" width="256" height="256" style="height: 256px; width: 256px; position: fixed; right: 0px; bottom: 0px; z-index: 1;"></canvas>
-
-	<script src="./js/webgl-debug.js"></script>
+	<canvas id="texture" width="256"  height="256" style="display: none; height: 256px; width: 256px; position: fixed; right: 0px; bottom: 0px; z-index: 1;"></canvas>
 
 	<script src="./js/map_projection.js"></script>
 

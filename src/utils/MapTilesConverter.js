@@ -1,9 +1,6 @@
 Potree.MapTilesConverter = class MapTilesConverter {
 	constructor(projection, matrixWorld) {
 		this.projection = projection;
-		proj4.defs('inputCoord', this.projection);
-		this._inputCoordinateSystem = proj4.defs("inputCoord");
-		this._WGS84 = proj4.defs("WGS84");
 		this._cachedTileData = new Map();
 		this._matrixWorld = matrixWorld;
 	}
