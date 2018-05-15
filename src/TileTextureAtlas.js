@@ -30,10 +30,7 @@ Potree.Tile = class Tile {
 		else return this._convertValue(forZoomLevel, this.y + 1);
 	}
 
-	_convertValue(toZoomLevel, oldValue) {
-		return oldValue * Math.pow(2, toZoomLevel - this.zoom);
-	}
-
+	
 	overlapsNode(node) {
 		if (this.maxX(node.zoom) <= node.minX) return false; // the tile is to the left of the node
 		if (this.minX(node.zoom) >= node.maxX) return false; // the tile is to the right of the node
@@ -91,6 +88,10 @@ Potree.Tile = class Tile {
 
 	nodeHeight(node) {
 		return (node.maxY - node.minY) / (this.maxY(node.zoom) - this.minY(node.zoom));
+	}
+
+	_convertValue(toZoomLevel, oldValue) {
+		return oldValue * Math.pow(2, toZoomLevel - this.zoom);
 	}
 
 	// Returns a number between 0 and 1
