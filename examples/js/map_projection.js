@@ -7,10 +7,14 @@
 	viewer.setPointBudget(1*1000*1000);
 	viewer.loadSettingsFromURL();
 
-	viewer.setDescription("Point cloud courtesy of <a target='_blank' href='https://www.sigeom.ch/'>sigeom sa</a>");
+	viewer.setDescription("Point cloud courtesy of <a target='_blank' href='https://kortforsyningen.dk/'>https://kortforsyningen.dk/</a>");
+
+	viewer.loadGUI(() => {
+		viewer.setLanguage('en');
+	});
 
 	// Load and add point cloud to scene
-	Potree.loadPointCloud("http://aarhus.bnjamin.com/cloud.js", "sigeom.sa", e => {
+	Potree.loadPointCloud("http://aarhus.bnjamin.com/cloud.js", "aarhus", e => {
 		let scene = viewer.scene;
 		let pointcloud = e.pointcloud;
 		pointcloud.usesMapTexture = true;
