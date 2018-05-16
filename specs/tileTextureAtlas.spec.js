@@ -1,11 +1,15 @@
 let chai = require("chai");
 // Tell chai that we'll be using the "should" style assertions.
 let MockBrowser = require('mock-browser').mocks.MockBrowser;
-Potree = {};
+Potree = Potree ? Potree : {};
 let sinon = require("sinon");
 let sinonChai = require("sinon-chai");
 chai.use(sinonChai);
 chai.should();
+
+if (typeof Potree === "undefined") {
+	Potree = {};
+}
 
 require('../src/TileTextureAtlas');
 

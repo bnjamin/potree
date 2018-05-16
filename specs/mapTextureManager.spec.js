@@ -1,7 +1,9 @@
 let chai = require("chai");
 // Tell chai that we'll be using the "should" style assertions.
 chai.should();
-Potree = {};
+if (typeof Potree === "undefined") {
+	Potree = {};
+}
 
 let MapTextureManager = require('../src/MapTextureManager');
 

@@ -1,9 +1,10 @@
 let chai = require("chai");
 // Tell chai that we'll be using the "should" style assertions.
 chai.should();
-Potree = {
-	utils: {}
-};
+if (typeof Potree === "undefined") {
+	Potree = {};
+}
+Potree.utils = {};
 Potree.utils.computeTransformedBoundingBox = function () {
 	let boundingBox = arguments[0];
 	return {

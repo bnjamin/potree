@@ -1,6 +1,8 @@
 let chai = require("chai");
 chai.should();
-Potree = {};
+if (typeof Potree === "undefined") {
+	Potree = {};
+}
 
 require("../src/TileTextureAtlas");
 
