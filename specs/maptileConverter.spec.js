@@ -28,9 +28,12 @@ require('../src/utils/MapTilesConverter');
 
 
 describe('MapTileConverter', function () {
-	let projection = "Irrelevant";
-	let matrixWorld = "Irrelevant";
-	let mapTileConverter = new Potree.MapTilesConverter(projection, matrixWorld);
+	let mapTileConverter;
+	beforeEach(() => {
+		let projection = "Irrelevant";
+		let matrixWorld = "Irrelevant";
+		mapTileConverter = new Potree.MapTilesConverter(projection, matrixWorld);
+	});
 
 
 	describe('lat2tile', function () {

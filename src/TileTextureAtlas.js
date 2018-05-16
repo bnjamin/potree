@@ -163,7 +163,7 @@ Potree.TileTextureAtlas = class TileTextureAtlas {
 	}
 
 	removeOldestTile() {
-		let oldestDate = Math.min(...this._tiles.map(d => d.stamp));
+		let oldestDate = Math.min(...this._usedTiles().map(d => d.stamp));
 		let tile = this._tiles.find(o => o.stamp.getTime() === oldestDate)
 		let index = this._tiles.indexOf(tile);
 		this.removeIndex(index);
@@ -202,7 +202,7 @@ Potree.TileTextureAtlas = class TileTextureAtlas {
 		ctx.drawImage(image, xOffset, yOffset);
 	}
 
-  _usedTiles() {
+	_usedTiles() {
 		return this._tiles.filter(tile => tile !== null && tile !== undefined);
 	}
 
