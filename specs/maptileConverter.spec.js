@@ -4,14 +4,14 @@ chai.should();
 Potree = {
 	utils: {}
 };
-Potree.utils.computeTransformedBoundingBox = function(){
+Potree.utils.computeTransformedBoundingBox = function () {
 	let boundingBox = arguments[0];
 	return {
-		min:{
+		min: {
 			x: boundingBox.min.x,
 			y: boundingBox.min.y
 		},
-		max:{
+		max: {
 			x: boundingBox.max.x,
 			y: boundingBox.max.y
 		}
@@ -22,17 +22,15 @@ proj4 = function () {
 	return coordinates;
 }
 
-proj4.defs = function(){};
-let MapTilesConverter = require('../src/utils/MapTilesConverter');
+proj4.defs = function () { };
+require('../src/utils/MapTilesConverter');
 
 
 describe('MapTileConverter', function () {
-	let mapTileConverter;
-	beforeEach(() => {
-		let projection = "Irrelevant";
-		let matrixWorld = "Irrelevant";
-		mapTileConverter = new Potree.MapTilesConverter(projection, matrixWorld);
-	});
+	let projection = "Irrelevant";
+	let matrixWorld = "Irrelevant";
+	let mapTileConverter = new Potree.MapTilesConverter(projection, matrixWorld);
+
 
 	describe('lat2tile', function () {
 		it('should return 0 when zoomlevel is 1', () => {
@@ -162,7 +160,7 @@ describe('MapTileConverter', function () {
 				min: min,
 				max: max
 			};
-			
+
 			let geometryNode = {
 				id: 4,
 				boundingBox: nodeBox
@@ -182,11 +180,11 @@ describe('MapTileConverter', function () {
 
 	describe('CalcDistanceBetween', function () {
 		it('should return 6575m', () => {
-			let minCoord = [-133.59375,84.54136107313408];
+			let minCoord = [-133.59375, 84.54136107313408];
 			let maxCoord = [-132.890625, 84.47406458459159];
 			let distance = Math.floor(mapTileConverter.CalcDistanceBetween(minCoord, maxCoord));
 			distance.should.equal(6575);
-			
+
 		})
 
 		it('should return 165.665km between Aarhus and Copenhagen', () => {
@@ -196,7 +194,7 @@ describe('MapTileConverter', function () {
 			distance.should.equal(165665);
 		})
 
-		
+
 	})
 
 

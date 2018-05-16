@@ -7,7 +7,7 @@ let sinonChai = require("sinon-chai");
 chai.use(sinonChai);
 chai.should();
 
-let TileTextureAtlas = require('../src/TileTextureAtlas');
+require('../src/TileTextureAtlas');
 
 
 describe('TileTextureAtlas', function () {
@@ -72,6 +72,10 @@ describe('TileTextureAtlas', function () {
 
 	describe('getTileDataFor', () => {
 		it('should return 2 tiles when two tile is inserted', () => {
+			tileTextureAtlas.insert(tileImage);
+			tileTextureAtlas.insert(tileImage);
+			let node 
+			tileTextureAtlas.getTileDataFor()
 
 		});
 	})
@@ -101,15 +105,6 @@ describe('TileTextureAtlas', function () {
 	})
 
 
-	// describe('removeOldestTile', function () {
-	// 	it('should call removeIndex with index 0 when there is only one element in the atlas', () => {
-	// 		tileTextureAtlas.insert(tileImage);
-	// 		let index = tileTextureAtlas.removeOldestTile();
-	// 		index.should.equal(0);
-
-	// 	});
-
-	// })
 
 
 })
