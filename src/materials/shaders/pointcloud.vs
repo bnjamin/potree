@@ -425,6 +425,10 @@ vec3 getElevation(){
 	return cElevation;
 }
 
+bool isInsideUVBounds(float x, float y, vec4 uvBounds) {
+	return x >= uvBounds[0] && x <= uvBounds[1] && y >= uvBounds[2] && y <= uvBounds[3];
+}
+
 vec3 getMapColor(){
 	float nodeSize = uOctreeSize / pow(2.0, uLevel);
 	vec2 xyInNode = position.xy / nodeSize;
@@ -432,12 +436,10 @@ vec3 getMapColor(){
 	float y = xyInNode.y;
 
 	for(int i = 0; i < numOfTiles; i++) {
-	  tileAtlasData atlasData = uTileAtlasData[i];
-		bool xyInTile = x >= atlasData.uvBounds[0] && x <= atlasData.uvBounds[1] && y >= atlasData.uvBounds[2] && y <= atlasData.uvBounds[3];
-		if (xyInTile) {
+		tileAtlasData atlasData = uTileAtlasData[i];
+		if (isInsideUVBounds(x, y, atlasData.uvBounds)) {
 			float u = (atlasData.xyOffset.x + (x * atlasData.dimensions.x) ) / float(numberOfTilesWidth);
 			float v = (atlasData.xyOffset.y + (y * atlasData.dimensions.y) ) / float(numberOfTilesHeight);
-			vec2 uv = vec2(u, v);
 			return texture2D(texture, vec2(u, v)).rgb;
 		}
 	}
