@@ -23,46 +23,6 @@ Potree.MapTextureManager = class MapTextureManager {
 		return tiles;
 	}
 
-	// _calculateOverlap(coveringTiles) {
-	// 	let minU, minV = 1;
-	// 	let maxU, maxV = 0;
-	// 	let i = 0;
-	// 	let area = 0;
-	// 	while (minU !== 0 && minV !== 0 && maxU !== 1 && maxV !== 1) {
-	// 		let tiles = coveringTiles;
-	// 		tiles.length = i;
-	// 		tiles = tiles.filter(tile => this._overlapsTile(coveringTiles[i], tile));
-	// 		let areaCurrentTile = (coveringTiles[i].maxU - coveringTiles[i].minU) * (coveringTiles[i].maxV - coveringTiles[i].minV)
-	// 		let overlappedArea = this._calcOverlappedArea(coveringTiles[i], tiles);
-	// 		area = area + (areaCurrentTile - overlappedArea);
-	// 		minU = Math.min(coveringTiles[i].minU, minU);
-	// 		minV = Math.min(coveringTiles[i].minV, minV);
-	// 		maxU = Math.max(coveringTiles[i].maxU, maxU);
-	// 		maxV = Math.max(coveringTiles[i].maxV, maxV);
-	// 		i++;
-	// 		if (i >= tiles.length)
-	// 			break;
-	// 	}
-	// 	tiles.length = i;
-	// 	return tiles;
-	// }
-
-	// _calcOverlappedArea(currentTile, tiles) {
-	// 	tiles.forEach(tile => {
-
-	// 	});
-	// }
-
-	// _overlapsTile(currentTile, tile) {
-	// 	if (currentTile.maxU <= tile.minU) return false; // the tile is to the left of the node
-	// 	if (currentTile.maxV <= node.minV) return false; // the tile is to the right of the node
-	// 	if (currentTile.minV >= node.maxV) return false; // the tile is to the top of the node
-	// 	if (currentTile.minU >= node.maxU) return false; // the tile is to the bottom of the node
-
-	// 	return true; // The tile overlaps some or all of the node.
-	// }
-
-
 	_calcMaxZoom(resolution, lat) {
 		return Math.floor(Math.log2(Math.abs(Math.cos(lat)) * 156543.03 / resolution)) - Potree.MapTextureManagerSettings.zoomLevelCorrection;
 	}
@@ -224,19 +184,6 @@ Potree.MapTextureManager = class MapTextureManager {
 			}
 			let imageURL = Potree.MapTextureManagerSettings.tileServer + tile.zoom + "/" + tile.X + "/" + tile.Y + ".png";
 			image.src = imageURL;
-			// fetch(Potree.MapTextureManagerSettings.tileServer + tile.zoom + "/" + tile.X + "/" + tile.Y + ".png",
-			// 	{ mode: 'cors', cache: 'no-cache, no-store' })
-			// 	.then(response => response.blob() )
-			// 	.then(blob => {
-			// 		let imageURL = URL.createObjectURL(blob);
-			// 		let image = this._tileImage;
-			// 		image.onload = () => {
-			// 			let data = { tile: tile, image: image }
-			// 			resolve(data);
-			// 			URL.revokeObjectURL(imageURL);
-			// 		}
-			// 		image.src = imageURL;
-			// 	});
 		});
 	}
 
