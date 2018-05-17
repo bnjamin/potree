@@ -77,7 +77,7 @@ uniform vec3 bbMax;
 uniform float uLevel;
 uniform float uVNStart;
 uniform bool uIsLeafNode;
-uniform tileAtlasData uTileAtlasData[numOfTiles]; // TODO: Set the number in an define.
+uniform tileAtlasData uTileAtlasData[numOfTiles];
 
 uniform vec3 uColor;
 uniform float uOpacity;
