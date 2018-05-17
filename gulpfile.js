@@ -136,9 +136,6 @@ let workers = {
 		"src/loader/PointAttributes.js",
 		"src/InterleavedBuffer.js",
 		"src/utils/toInterleavedBufferAttribute.js",
-	],
-	"ServiceWorker": [
-		"src/workers/CacheWorker.js"
 	]
 };
 
