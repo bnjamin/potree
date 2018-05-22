@@ -103,7 +103,7 @@ uniform vec3 uShadowColor;
 uniform sampler2D visibleNodes;
 uniform sampler2D gradient;
 uniform sampler2D classificationLUT;
-uniform sampler2D texture;
+uniform sampler2D mapTexture;
 
 #if defined(num_shadowmaps) && num_shadowmaps > 0
 uniform sampler2D uShadowMap[num_shadowmaps];
@@ -440,7 +440,7 @@ vec3 getMapColor(){
 		if (isInsideUVBounds(x, y, atlasData.uvBounds)) {
 			float u = (atlasData.xyOffset.x + (x * atlasData.dimensions.x) ) / float(numberOfTilesWidth);
 			float v = (atlasData.xyOffset.y + (y * atlasData.dimensions.y) ) / float(numberOfTilesHeight);
-			return texture2D(texture, vec2(u, v)).rgb;
+			return texture2D(mapTexture, vec2(u, v)).rgb;
 		}
 	}
 

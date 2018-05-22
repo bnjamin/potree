@@ -627,10 +627,10 @@ Potree.Renderer = class Renderer {
 			}
 			resolution = diagonalLengthOfVisibleBounds / screenWidth;
 			mapTextureManager.updateTextureFor(nodes, camera, screenWidth, resolution, (mapTexture) => {
-				if (material.texture) {
-					material.texture.dispose();
+				if (material.mapTexture) {
+					material.mapTexture.dispose();
 				}
-				material.texture = mapTexture;
+				material.mapTexture = mapTexture;
 			});
 		}
 
@@ -1106,9 +1106,9 @@ Potree.Renderer = class Renderer {
 			gl.bindTexture(classificationTexture.target, classificationTexture.id);
 			currentTextureBindingPoint++;
 
-			let mapTexture = this.textures.get(material.uniforms.texture.value);
+			let mapTexture = this.textures.get(material.uniforms.mapTexture.value);
 			if (mapTexture) {
-				shader.setUniform1i("texture", currentTextureBindingPoint);
+				shader.setUniform1i("mapTexture", currentTextureBindingPoint);
 				gl.activeTexture(gl.TEXTURE0 + currentTextureBindingPoint);
 				gl.bindTexture(mapTexture.target, mapTexture.id);
 				currentTextureBindingPoint++;
