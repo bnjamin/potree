@@ -444,7 +444,7 @@ vec3 getMapColor(){
 		}
 	}
 
-	return vec3(0, 0, 0);
+	return vec3(0.945, 0.930, 0.914);
 }
 
 vec4 getClassification(){

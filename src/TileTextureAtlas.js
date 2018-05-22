@@ -108,6 +108,9 @@ Potree.TileTextureAtlas = class TileTextureAtlas {
 		this._canvas.height = tileHeight * this._numberOfTilesHeight;
 		this._canvas.width = tileWidth * this._numberOfTilesWidth;
 		this._tiles = Array(this._numberOfTilesHeight * this._numberOfTilesWidth);
+		let ctx = this._canvas.getContext("2d");
+		ctx.fillStyle = "#f2eeea"
+		ctx.fillRect(0, 0, this._canvas.width, this._canvas.height);
 	}
 
 	getNumberOfTilesInAtlas() {
@@ -194,12 +197,12 @@ Potree.TileTextureAtlas = class TileTextureAtlas {
 			tileImage.tile.Y,
 			tileImage.tile.zoom
 		);
-		this._tiles[index] = tile;
 		let ctx = this._canvas.getContext("2d");
 		let xOffset = (index % this._numberOfTilesWidth) * image.width;
 		let yOffset = Math.floor(index / this._numberOfTilesWidth) * image.height;
 
 		ctx.drawImage(image, xOffset, yOffset);
+		this._tiles[index] = tile;
 	}
 
 	_usedTiles() {
